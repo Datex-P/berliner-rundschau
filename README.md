@@ -62,22 +62,22 @@ Seite (Server Component)
 
 ### CMS-Adapter
 
-Das Projekt unterstützt **11 Headless CMS** + einen Mock-Fallback. Der Adapter wird per `CMS_ADAPTER` Env Var gewählt — oder automatisch anhand vorhandener CMS-Env-Vars erkannt:
+Das Projekt unterstützt **11 Headless CMS** + einen Mock-Fallback. 4 Adapter sind mit diesem Projekt getestet, die weiteren 7 sind architektonisch identisch aufgebaut und lassen sich per Env Var aktivieren. Der Adapter wird per `CMS_ADAPTER` Env Var gewählt — oder automatisch anhand vorhandener CMS-Env-Vars erkannt:
 
-| CMS | Adapter | SDK/Protokoll | Auth |
-|---|---|---|---|
-| Contentful | `contentful` | SDK (`contentful`) | CDA Token |
-| Storyblok | `storyblok` | SDK (`storyblok-js-client`) | Access Token |
-| DatoCMS | `datocms` | GraphQL via `executeQuery` | API Token |
-| Sanity | `sanity` | SDK (`@sanity/client`) + GROQ | Token (optional) |
-| Prismic | `prismic` | SDK (`@prismicio/client`) | Access Token (optional) |
-| Strapi | `strapi` | REST (`safeFetch`) | API Token (Bearer) |
-| Directus | `directus` | REST (`safeFetch`) | Static Token (Bearer) |
-| Hygraph | `hygraph` | GraphQL (`safeFetch`) | Access Token (Bearer) |
-| Payload | `payload` | REST (`safeFetch`) | API Key |
-| WordPress | `wordpress` | REST WP-JSON (`safeFetch`) | App Password (Basic Auth, optional) |
-| TYPO3 | `typo3` | REST (EXT:headless) | Bearer Token (optional) |
-| Mock | `mock` | In-Memory | — |
+| CMS | Adapter | SDK/Protokoll | Auth | Status |
+|---|---|---|---|---|
+| Contentful | `contentful` | SDK (`contentful`) | CDA Token | Getestet |
+| Storyblok | `storyblok` | SDK (`storyblok-js-client`) | Access Token | Getestet |
+| WordPress | `wordpress` | REST WP-JSON (`safeFetch`) | App Password (Basic Auth, optional) | Getestet |
+| TYPO3 | `typo3` | REST (EXT:headless) | Bearer Token (optional) | Getestet |
+| DatoCMS | `datocms` | GraphQL via `executeQuery` | API Token | Verfügbar |
+| Sanity | `sanity` | SDK (`@sanity/client`) + GROQ | Token (optional) | Verfügbar |
+| Prismic | `prismic` | SDK (`@prismicio/client`) | Access Token (optional) | Verfügbar |
+| Strapi | `strapi` | REST (`safeFetch`) | API Token (Bearer) | Verfügbar |
+| Directus | `directus` | REST (`safeFetch`) | Static Token (Bearer) | Verfügbar |
+| Hygraph | `hygraph` | GraphQL (`safeFetch`) | Access Token (Bearer) | Verfügbar |
+| Payload | `payload` | REST (`safeFetch`) | API Key | Verfügbar |
+| Mock | `mock` | In-Memory | — | Getestet |
 
 **Kein CMS konfiguriert?** → Mock-Daten, Website läuft sofort.
 
