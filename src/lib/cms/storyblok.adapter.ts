@@ -17,6 +17,11 @@ const version = (process.env.STORYBLOK_VERSION ?? "published") as
 const articleType = process.env.STORYBLOK_ARTICLE_TYPE ?? "article";
 const fieldMap = parseFieldMap(process.env.STORYBLOK_FIELD_MAP);
 
+const articleRelations = [
+  `${articleType}.${mapField(fieldMap, "category")}`,
+  `${articleType}.${mapField(fieldMap, "author")}`,
+].join(",");
+
 /* ---------- helpers ---------- */
 
 /** Shorthand for mapField with the module-level fieldMap. */
@@ -24,12 +29,13 @@ function mf(name: string): string {
   return mapField(fieldMap, name);
 }
 
-/** Paginate through all stories of a content type. */
+/** Paginate through all stories of a content type, resolving relations. */
 async function fetchAllStories(
   contentType: string,
   extraParams?: Record<string, unknown>,
 ): Promise<unknown[]> {
   const items: unknown[] = [];
+  const allRels: unknown[] = [];
   let page = 1;
   const perPage = 100;
   let total = Infinity;
@@ -43,10 +49,12 @@ async function fetchAllStories(
       ...extraParams,
     });
     items.push(...res.data.stories);
+    if (Array.isArray(res.data.rels)) allRels.push(...res.data.rels);
     total = res.total;
     page++;
   }
 
+  resolveRelations(items, allRels);
   return items;
 }
 
@@ -63,10 +71,20 @@ async function safeFetchAll(
 }
 
 /** Safely fetch a single story by slug (full path). Returns null if not found. */
-async function safeFetchStory(slug: string): Promise<unknown | null> {
+async function safeFetchStory(
+  slug: string,
+  extraParams?: Record<string, unknown>,
+): Promise<unknown | null> {
   try {
-    const res = await client.get(`cdn/stories/${slug}`, { version });
-    return res.data.story ?? null;
+    const res = await client.get(`cdn/stories/${slug}`, {
+      version,
+      ...extraParams,
+    });
+    const story = res.data.story ?? null;
+    if (story && Array.isArray(res.data.rels)) {
+      resolveRelations([story], res.data.rels);
+    }
+    return story;
   } catch {
     return null;
   }
@@ -97,6 +115,46 @@ function storyField(story: unknown, key: string): unknown {
   return (story as Record<string, unknown>)?.[key];
 }
 
+/** Check if a value is a resolved Storyblok story (not a UUID string). */
+function isResolvedStory(val: unknown): val is Record<string, unknown> {
+  return (
+    val != null &&
+    typeof val === "object" &&
+    "uuid" in (val as Record<string, unknown>)
+  );
+}
+
+/** Build a UUID → story map from a rels array. */
+function buildRelsMap(rels: unknown[]): Map<string, unknown> {
+  const map = new Map<string, unknown>();
+  for (const rel of rels) {
+    const r = rel as Record<string, unknown>;
+    if (typeof r.uuid === "string") map.set(r.uuid, rel);
+  }
+  return map;
+}
+
+/**
+ * Replace UUID strings in story content with resolved story objects.
+ * storyblok-js-client does NOT auto-merge rels into content fields —
+ * relation fields remain as UUID strings while resolved data sits in
+ * a separate `rels` array. This function does the merge manually.
+ */
+function resolveRelations(stories: unknown[], rels: unknown[]): void {
+  const map = buildRelsMap(rels);
+  if (map.size === 0) return;
+  for (const story of stories) {
+    const c = (story as Record<string, unknown>).content as
+      Record<string, unknown> | undefined;
+    if (!c) continue;
+    for (const [key, value] of Object.entries(c)) {
+      if (typeof value === "string" && map.has(value)) {
+        c[key] = map.get(value);
+      }
+    }
+  }
+}
+
 /* ---------- entry mappers ---------- */
 
 function mapStory(story: unknown): unknown {
@@ -112,8 +170,37 @@ function mapStory(story: unknown): unknown {
     : "";
 
   const imgField = c[mf("image")] as Record<string, unknown> | null;
-  const catField = c[mf("category")] as Record<string, unknown> | null;
-  const authField = c[mf("author")] as Record<string, unknown> | null;
+  const catField = c[mf("category")];
+  const authField = c[mf("author")];
+
+  const categoryData = isResolvedStory(catField)
+    ? {
+        id: String(catField.uuid ?? ""),
+        name: String(content(catField).name ?? catField.name ?? ""),
+        slug: String(catField.slug ?? ""),
+      }
+    : { id: "", name: "", slug: "" };
+
+  let authorData: {
+    id: string;
+    name: string;
+    slug: string;
+    avatar: string | null;
+  } = { id: "", name: "", slug: "", avatar: null };
+  if (isResolvedStory(authField)) {
+    const ac = content(authField);
+    const av = ac.avatar as Record<string, unknown> | null;
+    const avatarUrl =
+      av && typeof av === "object" && "filename" in av
+        ? String(av.filename ?? "")
+        : null;
+    authorData = {
+      id: String(authField.uuid ?? ""),
+      name: String(ac.name ?? authField.name ?? ""),
+      slug: String(authField.slug ?? ""),
+      avatar: avatarUrl || null,
+    };
+  }
 
   return {
     id: String(s.uuid ?? ""),
@@ -130,29 +217,8 @@ function mapStory(story: unknown): unknown {
             String((imgField as Record<string, unknown>).alt ?? ""),
           )
         : normalizeImage(typeof imgField === "string" ? imgField : null),
-    category: catField
-      ? {
-          id: String(
-            (catField as Record<string, unknown>).uuid ??
-              (catField as Record<string, unknown>)._uid ??
-              "",
-          ),
-          name: String((catField as Record<string, unknown>).name ?? ""),
-          slug: String((catField as Record<string, unknown>).slug ?? ""),
-        }
-      : { id: "", name: "", slug: "" },
-    author: authField
-      ? {
-          id: String(
-            (authField as Record<string, unknown>).uuid ??
-              (authField as Record<string, unknown>)._uid ??
-              "",
-          ),
-          name: String((authField as Record<string, unknown>).name ?? ""),
-          slug: String((authField as Record<string, unknown>).slug ?? ""),
-          avatar: "",
-        }
-      : { id: "", name: "", slug: "", avatar: "" },
+    category: categoryData,
+    author: authorData,
     tags: Array.isArray(s.tag_list) ? s.tag_list : [],
     readingTimeMinutes: Number(c[mf("readingTimeMinutes")] ?? 0),
     commentCount: 0,
@@ -187,14 +253,14 @@ function mapAuthor(story: unknown): unknown {
   const avatarUrl =
     avatarField && typeof avatarField === "object" && "filename" in avatarField
       ? String((avatarField as Record<string, unknown>).filename ?? "")
-      : "";
+      : null;
 
   return {
     id: String(s.uuid ?? ""),
     name: String(c.name ?? s.name ?? ""),
     slug: String(s.slug ?? ""),
     bio: String(c.bio ?? ""),
-    avatar: avatarUrl,
+    avatar: avatarUrl || null,
     role: String(c.role ?? ""),
   };
 }
@@ -205,31 +271,47 @@ const storyblokAdapter: CmsAdapter = {
   name: "storyblok",
 
   async fetchAllArticles(): Promise<unknown[]> {
-    const stories = await fetchAllStories(articleType);
+    const stories = await fetchAllStories(articleType, {
+      resolve_relations: articleRelations,
+    });
     return stories.map(mapStory);
   },
 
   async fetchArticleBySlug(slug: string): Promise<unknown | null> {
     /* Try direct slug fetch first, fall back to content_type filter */
-    const story = await safeFetchStory(slug);
+    const story = await safeFetchStory(slug, {
+      resolve_relations: articleRelations,
+    });
     if (story) return mapStory(story);
 
     const items = await safeFetchAll(articleType, {
       "filter_query[slug][is]": slug,
       per_page: 1,
+      resolve_relations: articleRelations,
     });
     return items.length > 0 ? mapStory(items[0]) : null;
   },
 
   async fetchArticlesByCategory(categorySlug: string): Promise<unknown[]> {
+    const allCats = await safeFetchAll("category");
+    const cat = allCats.find(
+      (c) => (c as Record<string, unknown>).slug === categorySlug,
+    );
+    if (!cat) return [];
+    const catUuid = String((cat as Record<string, unknown>).uuid ?? "");
+
     const items = await safeFetchAll(articleType, {
-      "filter_query[category][is]": categorySlug,
+      "filter_query[category][in]": catUuid,
+      resolve_relations: articleRelations,
     });
     return items.map(mapStory);
   },
 
   async searchArticlesByQuery(query: string): Promise<unknown[]> {
-    const items = await safeFetchAll(articleType, { search_term: query });
+    const items = await safeFetchAll(articleType, {
+      search_term: query,
+      resolve_relations: articleRelations,
+    });
     return items.map(mapStory);
   },
 
@@ -274,8 +356,16 @@ const storyblokAdapter: CmsAdapter = {
   },
 
   async fetchArticlesByAuthor(authorSlug: string): Promise<unknown[]> {
+    const allAuthors = await safeFetchAll("author");
+    const author = allAuthors.find(
+      (a) => (a as Record<string, unknown>).slug === authorSlug,
+    );
+    if (!author) return [];
+    const authorUuid = String((author as Record<string, unknown>).uuid ?? "");
+
     const items = await safeFetchAll(articleType, {
-      "filter_query[author][is]": authorSlug,
+      "filter_query[author][in]": authorUuid,
+      resolve_relations: articleRelations,
     });
     return items.map(mapStory);
   },
