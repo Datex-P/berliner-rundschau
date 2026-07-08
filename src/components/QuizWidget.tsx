@@ -8,11 +8,13 @@ interface QuizWidgetProps {
 }
 
 export default function QuizWidget({ data }: QuizWidgetProps) {
-  const { dailyQuiz } = data;
+  const { dailyQuiz } = data ?? {};
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
   const [score, setScore] = useState(0);
   const [finished, setFinished] = useState(false);
+
+  if (!dailyQuiz?.questions?.length) return null;
 
   const question = dailyQuiz.questions[currentIndex];
   const isAnswered = selectedOption !== null;

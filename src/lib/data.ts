@@ -190,7 +190,9 @@ export async function getNavigation(): Promise<Navigation> {
     const adapter = await resolveAdapter();
     const raw = await adapter.fetchNavigation();
     if (!isRecord(raw)) return defaultNavigation;
-    return parseNavigation(raw);
+    const parsed = parseNavigation(raw);
+    if (!parsed.primaryMenu.length) return defaultNavigation;
+    return parsed;
   } catch (err) {
     console.error(
       "[cms] Navigation fetch failed, using default:",

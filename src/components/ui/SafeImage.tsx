@@ -32,7 +32,7 @@ export default function SafeImage({
 }: SafeImageProps) {
   const [hasError, setHasError] = useState(false);
 
-  if (hasError) {
+  if (!src || hasError) {
     return (
       <div
         className="flex items-center justify-center bg-[var(--color-surface)] text-[var(--color-text-secondary)] w-full h-full absolute inset-0"

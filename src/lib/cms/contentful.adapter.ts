@@ -95,7 +95,11 @@ function mapEntry(entry: unknown): unknown {
 
   const rawBody = f[mf(fm, "body")];
   const bodyHtml = rawBody
-    ? sanitizeRichText(documentToHtmlString(rawBody as Parameters<typeof documentToHtmlString>[0]))
+    ? sanitizeRichText(
+        documentToHtmlString(
+          rawBody as Parameters<typeof documentToHtmlString>[0],
+        ),
+      )
     : "";
 
   const fileObj = imgFields?.file as Record<string, unknown> | undefined;
@@ -132,9 +136,9 @@ function mapEntry(entry: unknown): unknown {
           id: (sys(authRef!).id as string) ?? "",
           name: (authFields.name as string) ?? "",
           slug: (authFields.slug as string) ?? "",
-          avatar: avatarUrl ? `https:${avatarUrl}` : "",
+          avatar: avatarUrl ? `https:${avatarUrl}` : null,
         }
-      : { id: "", name: "", slug: "", avatar: "" },
+      : { id: "", name: "", slug: "", avatar: null },
     tags: Array.isArray(f[mf(fm, "tags")]) ? f[mf(fm, "tags")] : [],
     readingTimeMinutes: Number(f[mf(fm, "readingTimeMinutes")] ?? 0),
     commentCount: 0,
