@@ -17,6 +17,11 @@
  *     --user admin \
  *     --app-password xxxx-xxxx-xxxx-xxxx
  *
+ * Hinweis Autoren: WordPress nutzt User-Accounts als Autoren — alle Artikel
+ * werden automatisch dem ausfuehrenden Account zugeordnet. Im Gegensatz zu
+ * Contentful/Storyblok (wo Autoren eigene Content-Eintraege sind) kann das
+ * Seed-Script den Autor-Namen nicht steuern.
+ *
  * Keine externen Abhaengigkeiten — nur Node.js 18+ fetch().
  */
 
