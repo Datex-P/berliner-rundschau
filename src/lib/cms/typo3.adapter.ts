@@ -4,8 +4,20 @@ import { normalizeImage } from "./image-utils";
 import { parseFieldMap, mapField } from "./field-map";
 import { safeFetch, sanitizeError } from "./http";
 import { defaultNavigation, defaultSiteConfig } from "./defaults";
+import {
+  fetchNewsticker as mockNewsticker,
+  fetchVideos as mockVideos,
+  fetchBreakingNews as mockBreakingNews,
+  fetchQuiz as mockQuiz,
+  fetchStockData as mockStockData,
+} from "@/lib/mock";
 
 /* ---------- TYPO3 response types ---------- */
+
+interface T3ImageVariant {
+  publicUrl?: string | null;
+  dimensions?: { width?: number; height?: number } | null;
+}
 
 interface T3MediaItem {
   publicUrl?: string;
@@ -13,6 +25,10 @@ interface T3MediaItem {
     alternative?: string;
     width?: number;
     height?: number;
+  };
+  images?: {
+    defaultImage?: T3ImageVariant;
+    [key: string]: T3ImageVariant | undefined;
   };
 }
 
@@ -214,14 +230,30 @@ function safeTimestamp(value: unknown): string {
   return "";
 }
 
+const isLocalCms =
+  baseUrl.includes(".ddev.site") || baseUrl.includes("localhost");
+
 function absoluteUrl(raw: unknown): string {
   if (!raw || typeof raw !== "string") return "";
   const trimmed = raw.trim();
   if (!trimmed) return "";
-  if (trimmed.startsWith("http://") || trimmed.startsWith("https://"))
+
+  if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) {
+    if (isLocalCms && trimmed.startsWith(baseUrl)) {
+      const path = trimmed.slice(baseUrl.length);
+      if (path.startsWith("/fileadmin/")) {
+        return `/cms-proxy${path}`;
+      }
+    }
     return trimmed;
+  }
   if (trimmed.startsWith("//")) return `https:${trimmed}`;
-  return `${baseUrl}${trimmed.startsWith("/") ? "" : "/"}${trimmed}`;
+
+  const path = trimmed.startsWith("/") ? trimmed : `/${trimmed}`;
+  if (isLocalCms && path.startsWith("/fileadmin/")) {
+    return `/cms-proxy${path}`;
+  }
+  return `${baseUrl}${path}`;
 }
 
 function slugify(text: string): string {
@@ -250,6 +282,25 @@ function resolveAuthorName(
   return "";
 }
 
+function resolveMediaUrl(img: T3MediaItem): string {
+  if (img.publicUrl) return img.publicUrl;
+  const defaultImg = img.images?.defaultImage;
+  if (defaultImg?.publicUrl) return defaultImg.publicUrl;
+  return "";
+}
+
+function resolveMediaDimensions(img: T3MediaItem): {
+  width?: number;
+  height?: number;
+} {
+  if (img.properties?.width || img.properties?.height) {
+    return { width: img.properties.width, height: img.properties.height };
+  }
+  const dims = img.images?.defaultImage?.dimensions;
+  if (dims) return { width: dims.width, height: dims.height };
+  return {};
+}
+
 function mapNewsToArticle(item: T3NewsItem): unknown {
   const fm = fieldMap;
   const mediaList = item.media ?? item.falMedia ?? [];
@@ -271,6 +322,9 @@ function mapNewsToArticle(item: T3NewsItem): unknown {
           .filter(Boolean)
       : [];
 
+  const imgUrl = img ? resolveMediaUrl(img) : "";
+  const imgDims = img ? resolveMediaDimensions(img) : {};
+
   return {
     id: String(item.uid ?? ""),
     headline: String(item[mapField(fm, "headline")] ?? item.title ?? ""),
@@ -283,12 +337,12 @@ function mapNewsToArticle(item: T3NewsItem): unknown {
     ),
     publicationDate: safeTimestamp(item.datetime),
     updatedAt: safeTimestamp(item.tstamp),
-    image: img
+    image: imgUrl
       ? normalizeImage(
-          absoluteUrl(img.publicUrl),
-          img.properties?.alternative ?? "",
-          img.properties?.width,
-          img.properties?.height,
+          absoluteUrl(imgUrl),
+          img?.properties?.alternative ?? "",
+          imgDims.width,
+          imgDims.height,
         )
       : normalizeImage(null),
     category: cat
@@ -545,23 +599,23 @@ const typo3Adapter: CmsAdapter = {
   },
 
   async fetchNewsticker(): Promise<unknown[]> {
-    return [];
+    return mockNewsticker();
   },
 
   async fetchVideos(): Promise<unknown[]> {
-    return [];
+    return mockVideos();
   },
 
   async fetchBreakingNews(): Promise<unknown[]> {
-    return [];
+    return mockBreakingNews();
   },
 
   async fetchQuiz(): Promise<unknown> {
-    return null;
+    return mockQuiz();
   },
 
   async fetchStockData(): Promise<unknown> {
-    return null;
+    return mockStockData();
   },
 };
 

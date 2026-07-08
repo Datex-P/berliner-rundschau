@@ -10,13 +10,22 @@ if (leaked.length > 0) {
   );
 }
 
-const cmsImageDomains: { protocol: "https"; hostname: string }[] = (
+const cmsImageDomains: { protocol: "http" | "https"; hostname: string }[] = (
   process.env.CMS_IMAGE_DOMAINS ?? ""
 )
   .split(",")
   .map((h) => h.trim())
   .filter(Boolean)
-  .map((hostname) => ({ protocol: "https" as const, hostname }));
+  .flatMap((hostname) =>
+    hostname.includes(".ddev.site") || hostname.includes("localhost")
+      ? [
+          { protocol: "http" as const, hostname },
+          { protocol: "https" as const, hostname },
+        ]
+      : [{ protocol: "https" as const, hostname }],
+  );
+
+const typo3Url = (process.env.TYPO3_URL ?? "").replace(/\/$/, "");
 
 const nextConfig: NextConfig = {
   reactCompiler: true,
@@ -37,6 +46,16 @@ const nextConfig: NextConfig = {
       ...cmsImageDomains,
     ],
     qualities: [50, 75, 100],
+  },
+
+  async rewrites() {
+    if (!typo3Url) return [];
+    return [
+      {
+        source: "/cms-proxy/fileadmin/:path*",
+        destination: `${typo3Url}/fileadmin/:path*`,
+      },
+    ];
   },
 
   async headers() {
