@@ -10,9 +10,22 @@ const baseUrl = process.env.WORDPRESS_URL!.replace(/\/$/, "");
 const postType = process.env.WORDPRESS_POST_TYPE ?? "posts";
 const fieldMap = parseFieldMap(process.env.WORDPRESS_FIELD_MAP);
 
+/**
+ * WordPress.com sites don't expose /wp-json/wp/v2/ — they use
+ * public-api.wordpress.com/wp/v2/sites/{host}/ instead.
+ * Set WORDPRESS_API_BASE to override the default self-hosted path.
+ */
+const apiBase = (
+  process.env.WORDPRESS_API_BASE ?? `${baseUrl}/wp-json/wp/v2`
+).replace(/\/$/, "");
+
 /* ---------- auth ---------- */
 
 function authHeaders(): Record<string, string> {
+  const bearer = process.env.WORDPRESS_BEARER_TOKEN;
+  if (bearer) {
+    return { Authorization: `Bearer ${bearer}` };
+  }
   const user = process.env.WORDPRESS_USERNAME;
   const pass = process.env.WORDPRESS_APP_PASSWORD;
   if (user && pass) {
@@ -26,7 +39,7 @@ function authHeaders(): Record<string, string> {
 /* ---------- fetch helpers ---------- */
 
 async function wpFetch<T>(path: string): Promise<T> {
-  const res = await safeFetch(`${baseUrl}/wp-json/wp/v2${path}`, {
+  const res = await safeFetch(`${apiBase}${path}`, {
     headers: { ...authHeaders(), Accept: "application/json" },
   });
   return res.json() as Promise<T>;
@@ -45,7 +58,7 @@ async function fetchAllPaginated(
   let totalPages = 1;
 
   while (page <= totalPages) {
-    const url = `${baseUrl}/wp-json/wp/v2/${endpoint}?per_page=100&page=${page}&_embed${extraParams}`;
+    const url = `${apiBase}/${endpoint}?per_page=100&page=${page}&_embed${extraParams}`;
     const res = await safeFetch(url, {
       headers: { ...authHeaders(), Accept: "application/json" },
     });
@@ -70,7 +83,8 @@ function mapPost(post: Record<string, unknown>): unknown {
   /* Featured image */
   const mediaArr = embedded["wp:featuredmedia"] as unknown[] | undefined;
   const media = mediaArr?.[0] as Record<string, unknown> | undefined;
-  const mediaDetails = media?.media_details as Record<string, unknown> | undefined;
+  const mediaDetails = media?.media_details as
+    Record<string, unknown> | undefined;
   const sizes = mediaDetails?.sizes as Record<string, unknown> | undefined;
   const fullSize = sizes?.full as Record<string, unknown> | undefined;
 
@@ -205,7 +219,7 @@ const wordpressAdapter: CmsAdapter = {
     let totalPages = 1;
 
     while (page <= totalPages) {
-      const url = `${baseUrl}/wp-json/wp/v2/${postType}?per_page=100&page=${page}&_fields=slug,modified`;
+      const url = `${apiBase}/${postType}?per_page=100&page=${page}&_fields=slug,modified`;
       const res = await safeFetch(url, {
         headers: { ...authHeaders(), Accept: "application/json" },
       });
@@ -230,7 +244,10 @@ const wordpressAdapter: CmsAdapter = {
       const items = await fetchAllPaginated("categories", "&hide_empty=true");
       return (items as Record<string, unknown>[]).map(mapCategory);
     } catch (err: unknown) {
-      console.error("[wordpress] fetchAllCategories failed:", sanitizeError(err));
+      console.error(
+        "[wordpress] fetchAllCategories failed:",
+        sanitizeError(err),
+      );
       return [];
     }
   },
@@ -243,7 +260,10 @@ const wordpressAdapter: CmsAdapter = {
       if (!Array.isArray(items) || items.length === 0) return null;
       return mapCategory(items[0]);
     } catch (err: unknown) {
-      console.error("[wordpress] fetchCategoryBySlug failed:", sanitizeError(err));
+      console.error(
+        "[wordpress] fetchCategoryBySlug failed:",
+        sanitizeError(err),
+      );
       return null;
     }
   },
@@ -266,7 +286,10 @@ const wordpressAdapter: CmsAdapter = {
       if (!Array.isArray(items) || items.length === 0) return null;
       return mapAuthor(items[0]);
     } catch (err: unknown) {
-      console.error("[wordpress] fetchAuthorBySlug failed:", sanitizeError(err));
+      console.error(
+        "[wordpress] fetchAuthorBySlug failed:",
+        sanitizeError(err),
+      );
       return null;
     }
   },
