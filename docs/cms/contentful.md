@@ -26,7 +26,7 @@ Die Ausgabe vom Seed-Script in `.env.local` eintragen:
 
 ```bash
 CMS_ADAPTER=contentful
-CONTENTFUL_SPACE_ID=m0cdzbuddiyk
+CONTENTFUL_SPACE_ID=<deine-space-id>
 CONTENTFUL_ACCESS_TOKEN=<dein-cda-token>
 CMS_IMAGE_DOMAINS=images.ctfassets.net
 CONTENTFUL_FIELD_MAP={"headline":"title","teaser":"excerpt","image":"heroImage","isFeatured":"featured"}
