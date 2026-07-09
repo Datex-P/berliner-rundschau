@@ -21,9 +21,7 @@ Bei gehosteter Instanz: `localhost` durch die Domain ersetzen.
 ## Demo-Daten (Seed Script)
 
 ```bash
-node cms-seeds/seed-strapi.mjs \
-  --url http://localhost:1337 \
-  --token <admin-api-token>
+node cms-seeds/seed-strapi.mjs --url http://localhost:1337 --token <admin-api-token>
 ```
 
 - **Token-Typ:** Full-Access API Token (Settings → API Tokens → Create)

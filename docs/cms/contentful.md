@@ -26,11 +26,10 @@ CONTENTFUL_FIELD_MAP={"headline":"title","teaser":"excerpt","image":"heroImage",
 ## Demo-Daten (Seed Script)
 
 ```bash
-node cms-seeds/seed-contentful.mjs \
-  --space-id <space-id> \
-  --management-token <cma-token> \
-  [--environment master]
+node cms-seeds/seed-contentful.mjs --space-id <space-id> --management-token <cma-token>
 ```
+
+Optional: `--environment master` (Default)
 
 - **Token-Typ:** CMA Token (Management API) von https://app.contentful.com/account/profile/cma_tokens
 - Erstellt Content-Types + Einträge + publiziert automatisch

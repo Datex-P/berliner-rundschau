@@ -25,9 +25,7 @@ CMS_IMAGE_DOMAINS=cms.example.de
 ## Demo-Daten (Seed Script)
 
 ```bash
-# DDEV + MySQL — kein REST-API, braucht laufendes DDEV-Projekt
-bash cms-seeds/seed-typo3.sh \
-  [--project-dir ~/Desktop/typo3-demo]
+bash cms-seeds/seed-typo3.sh --project-dir ~/Desktop/typo3-demo
 ```
 
 - **Kein Token nötig:** Schreibt direkt in die DDEV-MySQL-Datenbank

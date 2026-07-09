@@ -52,9 +52,7 @@ CMS_IMAGE_DOMAINS=images.unsplash.com
 ## Demo-Daten (Seed Script)
 
 ```bash
-node cms-seeds/seed-directus.mjs \
-  --url http://localhost:8055 \
-  --token directus-demo-static-token
+node cms-seeds/seed-directus.mjs --url http://localhost:8055 --token directus-demo-static-token
 ```
 
 - **Token-Typ:** Static Admin Token (`ADMIN_TOKEN` in Docker Compose)

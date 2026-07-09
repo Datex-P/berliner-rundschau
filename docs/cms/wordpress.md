@@ -28,15 +28,10 @@ WORDPRESS_URL=https://example.com
 
 ```bash
 # WordPress.com (OAuth2 Bearer Token)
-node cms-seeds/seed-wordpress.mjs \
-  --site example.wordpress.com \
-  --token <bearer-token>
+node cms-seeds/seed-wordpress.mjs --site example.wordpress.com --token <bearer-token>
 
 # WordPress Self-Hosted (Application Password)
-node cms-seeds/seed-wordpress.mjs \
-  --url https://example.com \
-  --user admin \
-  --app-password <app-password>
+node cms-seeds/seed-wordpress.mjs --url https://example.com --user admin --app-password <app-password>
 ```
 
 - **WordPress.com:** Bearer Token für Schreibzugriff

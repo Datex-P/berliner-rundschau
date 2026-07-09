@@ -19,9 +19,7 @@ CMS_IMAGE_DOMAINS=images.prismic.io
 ## Demo-Daten (Seed Script)
 
 ```bash
-node cms-seeds/seed-prismic.mjs \
-  --repo <repo-name> \
-  --write-token <write-api-token>
+node cms-seeds/seed-prismic.mjs --repo <repo-name> --write-token <write-api-token>
 ```
 
 - **Token-Typ:** Write API Token (Settings → API & Security → Generate a Write Token)

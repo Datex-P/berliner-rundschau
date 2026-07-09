@@ -22,12 +22,8 @@ CMS_IMAGE_DOMAINS=cdn.sanity.io
 ## Demo-Daten (Seed Script)
 
 ```bash
-# Erfordert vorheriges Login:
-# sanity login  (interaktiv im Browser)
-
-node cms-seeds/seed-sanity.mjs \
-  --project-id <project-id> \
-  --dataset production
+# Erfordert vorheriges Login: sanity login (interaktiv im Browser)
+node cms-seeds/seed-sanity.mjs --project-id <project-id> --dataset production
 ```
 
 - **Auth:** Nutzt das Sanity CLI Token (`sanity login` muss vorher ausgeführt werden)

@@ -30,9 +30,7 @@ CMS_IMAGE_DOMAINS=localhost
 ## Demo-Daten (Seed Script)
 
 ```bash
-node cms-seeds/seed-payload.mjs \
-  --url http://localhost:3001 \
-  --api-key <api-key>
+node cms-seeds/seed-payload.mjs --url http://localhost:3001 --api-key <api-key>
 ```
 
 - **Token-Typ:** API Key (Settings → API Keys im Admin-Panel)

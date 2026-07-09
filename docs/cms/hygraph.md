@@ -20,9 +20,7 @@ CMS_IMAGE_DOMAINS=media.graphassets.com
 ## Demo-Daten (Seed Script)
 
 ```bash
-node cms-seeds/seed-hygraph.mjs \
-  --endpoint <content-api-endpoint> \
-  --token <management-api-token>
+node cms-seeds/seed-hygraph.mjs --endpoint <content-api-endpoint> --token <management-api-token>
 ```
 
 - **Token-Typ:** Management API Token (Settings → API Access → Permanent Auth Tokens) mit `Mutations`-Permission

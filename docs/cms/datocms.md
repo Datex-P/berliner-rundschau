@@ -19,8 +19,7 @@ CMS_IMAGE_DOMAINS=www.datocms-assets.com
 ## Demo-Daten (Seed Script)
 
 ```bash
-node cms-seeds/seed-datocms.mjs \
-  --token <full-access-api-token>
+node cms-seeds/seed-datocms.mjs --token <full-access-api-token>
 ```
 
 - **Token-Typ:** Full-Access API Token (Settings → API Tokens) — nicht Read-Only

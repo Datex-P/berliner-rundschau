@@ -18,9 +18,7 @@ CMS_IMAGE_DOMAINS=a.storyblok.com
 ## Demo-Daten (Seed Script)
 
 ```bash
-node cms-seeds/seed-storyblok.mjs \
-  --space-id <space-id> \
-  --token <personal-access-token>
+node cms-seeds/seed-storyblok.mjs --space-id <space-id> --token <personal-access-token>
 ```
 
 - **Token-Typ:** Personal Access Token von app.storyblok.com → My Account
