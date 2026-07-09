@@ -78,13 +78,61 @@ function childrenToHtml(children: unknown[]): string {
     .join("");
 }
 
+/** Convert a markdown-like string (subset) to HTML paragraphs. */
+function markdownToHtml(md: string): string {
+  return md
+    .split(/\n{2,}/)
+    .map((para) => {
+      const trimmed = para.trim();
+      if (!trimmed) return "";
+      const h3 = trimmed.match(/^###\s+(.+)/);
+      if (h3) return `<h3>${h3[1]}</h3>`;
+      const h2 = trimmed.match(/^##\s+(.+)/);
+      if (h2) return `<h2>${h2[1]}</h2>`;
+      const h1 = trimmed.match(/^#\s+(.+)/);
+      if (h1) return `<h1>${h1[1]}</h1>`;
+      return `<p>${trimmed.replace(/\n/g, "<br>")}</p>`;
+    })
+    .filter(Boolean)
+    .join("\n");
+}
+
+/** Handle Strapi Dynamic Zone blocks (shared.rich-text, shared.quote, shared.media). */
+function dynamicZoneToHtml(blocks: unknown[]): string {
+  return blocks
+    .map((block) => {
+      if (!block || typeof block !== "object") return "";
+      const b = block as Record<string, unknown>;
+      const comp = String(b.__component ?? "");
+      if (comp === "shared.rich-text") {
+        const bodyStr = String(b.body ?? "");
+        // Bereits HTML: direkt zurückgeben; sonst Markdown konvertieren
+        return bodyStr.trimStart().startsWith("<")
+          ? bodyStr
+          : markdownToHtml(bodyStr);
+      }
+      if (comp === "shared.quote") {
+        const title = b.title ? `<cite>${String(b.title)}</cite>` : "";
+        return `<blockquote><p>${String(b.body ?? "")}</p>${title}</blockquote>`;
+      }
+      return "";
+    })
+    .filter(Boolean)
+    .join("\n");
+}
+
 /**
- * Convert Strapi v5 "blocks" rich-text JSON to sanitized HTML.
- * Falls through to returning the raw string when content is already HTML.
+ * Convert Strapi "blocks" content to sanitized HTML.
+ * Handles: Dynamic Zone components (shared.rich-text/quote) and native Strapi Blocks format.
  */
 function blocksToHtml(blocks: unknown): string {
   if (typeof blocks === "string") return blocks;
   if (!Array.isArray(blocks)) return "";
+
+  // Dynamic Zone detection: items have __component instead of type
+  if (blocks.length > 0 && (blocks[0] as Record<string, unknown>).__component) {
+    return sanitizeRichText(dynamicZoneToHtml(blocks));
+  }
 
   return blocks
     .map((block) => {
@@ -138,6 +186,7 @@ interface StrapiListResponse {
 async function fetchAllPaginated(
   col: string,
   extraParams = "",
+  populate = "*",
 ): Promise<unknown[]> {
   const items: unknown[] = [];
   let page = 1;
@@ -146,7 +195,7 @@ async function fetchAllPaginated(
   while (page <= totalPages) {
     const extra = extraParams ? `&${extraParams}` : "";
     const res = await strapiFetch<StrapiListResponse>(
-      `/${col}?pagination[page]=${page}&pagination[pageSize]=100&populate=*${extra}`,
+      `/${col}?pagination[page]=${page}&pagination[pageSize]=100&populate=${populate}${extra}`,
     );
     if (Array.isArray(res.data)) {
       items.push(
@@ -161,9 +210,13 @@ async function fetchAllPaginated(
 }
 
 /** Safely fetch all items; returns [] on error. */
-async function safeFetchAll(col: string, extraParams = ""): Promise<unknown[]> {
+async function safeFetchAll(
+  col: string,
+  extraParams = "",
+  populate = "*",
+): Promise<unknown[]> {
   try {
-    return await fetchAllPaginated(col, extraParams);
+    return await fetchAllPaginated(col, extraParams, populate);
   } catch (err: unknown) {
     console.warn(`[strapi] safeFetchAll(${col}) failed: ${sanitizeError(err)}`);
     return [];
@@ -252,6 +305,10 @@ function mapItem(item: Record<string, unknown>): unknown {
   const authData = authRaw?.data
     ? unwrapItem(authRaw.data as Record<string, unknown>)
     : authRaw;
+  const authorAvatarUrl =
+    absoluteUrl(
+      resolveImageUrl(authData?.avatar as Record<string, unknown> | null),
+    ) ?? "";
 
   // Tags — may be string[] or object[] with .name
   const rawTags = item[mf("tags")];
@@ -289,7 +346,7 @@ function mapItem(item: Record<string, unknown>): unknown {
           id: String(authData.id ?? ""),
           name: String(authData.name ?? authData.username ?? ""),
           slug: String(authData.slug ?? ""),
-          avatar: "",
+          avatar: authorAvatarUrl,
         }
       : { id: "", name: "", slug: "", avatar: "" },
     tags,
@@ -340,14 +397,18 @@ const strapiAdapter: CmsAdapter = {
   name: "strapi",
 
   async fetchAllArticles(): Promise<unknown[]> {
-    const items = await fetchAllPaginated(collection, "sort=publishedAt:desc");
+    const items = await fetchAllPaginated(
+      collection,
+      "sort=publishedAt:desc",
+      "cover,category,author,author.avatar",
+    );
     return items.map((i) => mapItem(i as Record<string, unknown>));
   },
 
   async fetchArticleBySlug(slug: string): Promise<unknown | null> {
     try {
       const res = await strapiFetch<StrapiListResponse>(
-        `/${collection}?filters[${mf("slug")}][$eq]=${encodeURIComponent(slug)}&populate=*&pagination[pageSize]=1`,
+        `/${collection}?filters[${mf("slug")}][$eq]=${encodeURIComponent(slug)}&populate=cover,category,author,author.avatar&pagination[pageSize]=1`,
       );
       if (!Array.isArray(res.data) || res.data.length === 0) return null;
       const item = unwrapItem(res.data[0] as Record<string, unknown>);
@@ -362,6 +423,7 @@ const strapiAdapter: CmsAdapter = {
     const items = await safeFetchAll(
       collection,
       `filters[${mf("category")}][slug][$eq]=${encodeURIComponent(categorySlug)}&sort=publishedAt:desc`,
+      "cover,category,author,author.avatar",
     );
     return items.map((i) => mapItem(i as Record<string, unknown>));
   },
@@ -370,6 +432,7 @@ const strapiAdapter: CmsAdapter = {
     const items = await safeFetchAll(
       collection,
       `filters[${mf("headline")}][$containsi]=${encodeURIComponent(query)}&sort=publishedAt:desc`,
+      "cover,category,author,author.avatar",
     );
     return items.map((i) => mapItem(i as Record<string, unknown>));
   },
@@ -420,6 +483,7 @@ const strapiAdapter: CmsAdapter = {
     const items = await safeFetchAll(
       collection,
       `filters[${mf("author")}][slug][$eq]=${encodeURIComponent(authorSlug)}&sort=publishedAt:desc`,
+      "cover,category,author,author.avatar",
     );
     return items.map((i) => mapItem(i as Record<string, unknown>));
   },
