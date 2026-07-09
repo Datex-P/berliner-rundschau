@@ -100,7 +100,7 @@ const IMAGES = [
   { name: "berlins-neue-verkehrsstrategie-hero", url: "https://images.unsplash.com/photo-1747197028387-b60586b389e6?auto=format&fit=crop&w=1200&h=675&q=80", alt: "Berliner Verkehrsstrategie — Straßenszene" },
   { name: "startup-boom-berlin-mitte-hero", url: "https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&w=1200&h=675&q=80", alt: "Start-up Büro in Berlin-Mitte" },
   { name: "kulturhauptstadt-berlin-sommer-hero", url: "https://images.unsplash.com/photo-1758380742154-44738eb92832?auto=format&fit=crop&w=1200&h=675&q=80", alt: "Berliner Museumslandschaft im Sommer" },
-  { name: "hertha-bsc-nachwuchs-hero", url: "https://images.unsplash.com/photo-1602453870769-970391ee6fc1?auto=format&fit=crop&w=1200&h=675&q=80", alt: "Fußball-Nachwuchsspieler beim Training" },
+  { name: "hertha-bsc-nachwuchs-hero", url: "https://images.unsplash.com/photo-1749651340944-4ac71fad61f6?auto=format&fit=crop&w=1200&h=675&q=80", alt: "Olympiastadion Berlin — Heimat von Hertha BSC" },
   { name: "wohnungsmarkt-berlin-hero", url: "https://images.unsplash.com/photo-1755896487242-23cb0847e493?auto=format&fit=crop&w=1200&h=675&q=80", alt: "Berliner Wohnhäuser von oben" },
   { name: "kommentar-digitalisierung-hero", url: "https://images.unsplash.com/photo-1459767129954-1b1c1f9b9ace?auto=format&fit=crop&w=1200&h=675&q=80", alt: "Verwaltungsgebäude in Berlin" },
   { name: "bvg-ubahn-netz-hero", url: "https://images.unsplash.com/photo-1752771433743-47a49376fb63?auto=format&fit=crop&w=1200&h=675&q=80", alt: "Berliner U-Bahn-Station" },

@@ -75,8 +75,8 @@ Das Projekt unterstützt **11 Headless CMS** + einen Mock-Fallback. 4 Adapter si
 | Prismic | `prismic` | SDK (`@prismicio/client`) | Access Token (optional) | Getestet |
 | Strapi | `strapi` | REST (`safeFetch`) | API Token (Bearer) | Getestet |
 | Directus | `directus` | REST (`safeFetch`) | Static Token (Bearer) | Verfügbar |
-| Hygraph | `hygraph` | GraphQL (`safeFetch`) | Access Token (Bearer) | Verfügbar |
-| Payload | `payload` | REST (`safeFetch`) | API Key | Verfügbar |
+| Hygraph | `hygraph` | GraphQL (`safeFetch`) | Access Token (Bearer) | Getestet |
+| Payload | `payload` | REST (`safeFetch`) | API Key | Getestet |
 | Mock | `mock` | In-Memory | — | Getestet |
 
 **Kein CMS konfiguriert?** → Mock-Daten, Website läuft sofort.
@@ -187,6 +187,25 @@ TYPO3_URL=https://cms.example.de
 - **Slug-Felder brauchen einen `slug_title_field`-Validator** mit der ID des Titelfeldes — sonst schlägt die Feldanlage fehl
 - **Singleton-Modelle** (`singleton: true`) haben in der CDA kein `all`-Präfix, sondern werden direkt per Modell-Name abgefragt (z.B. `query { siteConfig { ... } }` statt `allSiteConfigs`)
 
+**Hygraph-Besonderheiten:**
+- **JSON-Felder liefern geparste Objekte:** Hygraph JSON-Felder (`type: JSON`) kommen über die Content API als JavaScript-Objekte, NICHT als Strings. `JSON.parse()` auf bereits geparste Objekte crasht leise — der Adapter prüft mit `typeof === "string"` vor dem Parsen
+- **Management API ist asynchron:** Jede Schema-Mutation (Model/Field erstellen) startet eine Migration. Nur eine gleichzeitig erlaubt — das Seed-Script pollt nach jeder Mutation auf `status: "SUCCESS"` bevor die nächste gesendet wird
+- **Kein eingebautes Singleton:** Navigation, SiteConfig etc. werden über ein `slug`-Feld mit festem Wert `"singleton"` und `where: { slug: "singleton" }` abgefragt
+- **Public Content API für Mutations:** PAT-Token Content Permissions können trotz korrekter UI-Konfiguration fehlschlagen. Das Seed-Script nutzt die Public Content API (unauthentifiziert) als zuverlässige Alternative
+- **Body als String-Feld:** RichText-Felder benötigen Slate AST für Mutations — der Adapter speichert HTML als STRING-Feld und rendert es im Frontend mit DOMPurify
+- **Bilder als JSON-Feld:** Das Asset-Model hat kein `altText`-Feld. Bilder werden als JSON mit `url` + `alt` + `width` + `height` gespeichert
+- **Stages als Query-Variable:** Jede Query braucht `stage: $stage` (PUBLISHED/DRAFT) — ohne Stage-Variable werden nur DRAFT-Inhalte geliefert
+
+**Payload-Besonderheiten:**
+- **Lexical Rich Text:** Payload v3 verwendet den Lexical Editor. Body-Inhalte werden als Lexical AST JSON gespeichert (`{root: {children: [{type, children, ...}]}}`). Der Adapter konvertiert den AST rekursiv zu HTML — verschachtelte Inline-Formatting (bold + italic + underline) wird über Bit-Flags im `format`-Feld kodiert (1=bold, 2=italic, 8=underline, kombinierbar)
+- **REST API mit `depth`-Parameter:** Relations werden per Default als IDs geliefert. `?depth=2` löst verschachtelte Relationen auf (z.B. Article → Author → Avatar). Ohne `depth` kommen nur IDs statt Objekten
+- **MongoDB erforderlich:** Payload v3 läuft mit MongoDB (oder PostgreSQL). Lokal: `brew services start mongodb-community` auf macOS, dann `mongodb://127.0.0.1:27017/<db-name>` in `payload.config.ts`
+- **Collection-Schema in Code:** Content-Types werden als TypeScript-Dateien definiert (`src/collections/*.ts`), nicht über eine API. Schema-Änderungen erfordern einen Server-Neustart
+- **JWT-Authentifizierung:** Login über `POST /api/users/login` liefert ein JWT-Token. Seed-Scripts nutzen `Authorization: JWT <token>` für alle Schreiboperationen
+- **Port-Trennung:** Payload ist selbst eine Next.js-App — bei parallelem Betrieb mit der Berliner Rundschau auf separatem Port starten (z.B. Port 3001 für Payload, Port 3000 für die App)
+- **`createdAt`/`updatedAt` automatisch:** Payload fügt diese Felder automatisch zu allen Collections hinzu — nicht im Schema definieren, aber im Adapter verfügbar
+- **Bilder als Upload-Collection:** Media-Dateien werden über eine eigene Upload-Collection verwaltet. Der Adapter nutzt externe Bild-URLs (Unsplash) direkt per `CMS_IMAGE_DOMAINS`
+
 ##### Verifizierung: So prüfst du ob es funktioniert
 
 Nach `npm run dev` die folgenden Seiten im Browser öffnen:
@@ -253,6 +272,18 @@ bash cms-seeds/seed-typo3.sh \
 # DatoCMS (Full-Access API Token aus Settings → API Tokens)
 node cms-seeds/seed-datocms.mjs \
   --token <full-access-api-token>
+
+# Hygraph (PAT mit Management + Content API Permissions aus Settings → API Access → Permanent Auth Tokens)
+node cms-seeds/seed-hygraph.mjs \
+  --token <permanent-auth-token> \
+  --project-id <project-id> \
+  --region eu-west-2
+
+# Payload (Admin-Account mit Schreibrechten)
+node cms-seeds/seed-payload.mjs \
+  --url http://localhost:3001 \
+  --email <admin-email> \
+  --password <admin-password>
 ```
 
 ##### Hinweise zu einzelnen CMS
@@ -266,6 +297,8 @@ node cms-seeds/seed-datocms.mjs \
 | **Prismic** | Permanent Access Token | Erstellt Custom Types + Dokumente als **Drafts** — nach dem Seed im Dashboard über "Migration release" publizieren |
 | **TYPO3** | Kein Token | Schreibt direkt in die DDEV-MySQL-Datenbank, DDEV muss laufen |
 | **DatoCMS** | Full-Access API Token | Erstellt Content-Models (idempotent) + Einträge, publiziert automatisch |
+| **Hygraph** | Permanent Auth Token (Management + Content API) | Schema-Erstellung asynchron (Migration-Polling), Content über Public API, publiziert automatisch |
+| **Payload** | Admin-Account (Email + Passwort) | JWT-Login, Lexical-Body als AST (nicht HTML), MongoDB muss lokal laufen, idempotent (löscht + erstellt neu) |
 
 ##### Nach dem Seed
 
