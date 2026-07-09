@@ -65,6 +65,8 @@ export default async function RootLayout({ children }: RootLayoutProps) {
       suppressHydrationWarning
     >
       <head>
+        <link rel="preconnect" href="https://images.unsplash.com" />
+        <link rel="dns-prefetch" href="https://images.unsplash.com" />
         {/* Dark mode initialization — prevents flash of wrong theme */}
         <script
           dangerouslySetInnerHTML={{

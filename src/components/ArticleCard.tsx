@@ -117,7 +117,7 @@ export default function ArticleCard({
           height={IMAGE_DIMENSIONS.card.height}
           fill
           priority={priority}
-          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+          sizes="(max-width: 639px) calc(100vw - 2rem), (max-width: 1023px) calc(50vw - 3rem), 350px"
           className="object-cover group-hover:scale-105 transition-transform duration-300"
           unavailableLabel="Bild nicht verfügbar"
         />

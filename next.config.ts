@@ -53,6 +53,7 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "images.unsplash.com" },
       ...cmsImageDomains,
     ],
+    formats: ["image/avif", "image/webp"],
     qualities: [50, 75, 100],
   },
 

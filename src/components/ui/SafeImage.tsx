@@ -57,6 +57,7 @@ export default function SafeImage({
       height={fill ? undefined : height}
       sizes={sizes}
       priority={priority}
+      fetchPriority={priority ? "high" : undefined}
       fill={fill}
       className={className}
       unoptimized={isLocalhost}
