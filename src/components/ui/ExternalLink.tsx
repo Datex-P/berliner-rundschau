@@ -1,8 +1,4 @@
-// Scaffold: ExternalLink — External Link with noopener noreferrer + SR hint
-// Server Component — kein State noetig.
-//
-// WICHTIG: Default srHintLabel ist English. Projects in anderen Locales MUESSEN
-// srHintLabel explizit setzen (z.B. srHintLabel="(oeffnet in neuem Tab)" in de-DE).
+// Default srHintLabel ist English — in anderen Locales srHintLabel explizit setzen.
 
 import type { ReactNode } from "react";
 

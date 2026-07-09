@@ -1,10 +1,4 @@
-// JSON-LD Structured Data
-// Utility-Funktionen fuer Schema.org JSON-LD in Next.js Server Components.
-// Scaffolded — NICHT neu erstellen. Anpassen erlaubt (CMS-Feldnamen variieren).
-//
-// CANONICAL REMINDER (Next.js):
-// Canonical URLs werden per `alternates: { canonical: '...' }` in generateMetadata gesetzt.
-// Kein separates Utility noetig. Auf JEDER Page setzen, nicht nur Detail-Pages.
+// JSON-LD Structured Data — Schema.org fuer Next.js Server Components.
 
 type JsonLdInput = Record<string, unknown>;
 

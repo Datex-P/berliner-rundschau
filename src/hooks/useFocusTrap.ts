@@ -1,4 +1,3 @@
-// Scaffold: useFocusTrap
 import { useEffect, useRef } from "react";
 
 const FOCUSABLE_SELECTOR =

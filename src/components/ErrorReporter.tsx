@@ -1,4 +1,3 @@
-// Scaffold: Error-Reporter
 "use client";
 
 import { useEffect } from "react";

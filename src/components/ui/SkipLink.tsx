@@ -1,8 +1,4 @@
-// Scaffold: SkipLink — Accessibility Skip-Navigation
-// Addressiert: D3-Accessibility (Skip-Link)
-// Server Component — kein State noetig.
-//
-// WICHTIG: Default-Label ist English. Projects in anderen Locales MUESSEN
+// Default-Label ist English — in anderen Locales label explizit setzen.
 // label explizit setzen (z.B. label="Zum Inhalt springen" in de-DE layout).
 
 interface SkipLinkProps {

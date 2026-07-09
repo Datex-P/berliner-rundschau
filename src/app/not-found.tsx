@@ -1,6 +1,3 @@
-// 404-Seite — berliner-rundschau
-// Pass 2 darf diese Datei erweitern und an das Design anpassen.
-
 import Link from "next/link";
 
 export default function NotFound() {
