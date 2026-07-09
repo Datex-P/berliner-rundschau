@@ -72,7 +72,7 @@ Das Projekt unterstützt **11 Headless CMS** + einen Mock-Fallback. 4 Adapter si
 | TYPO3 | `typo3` | REST (EXT:headless) | Bearer Token (optional) | Getestet |
 | DatoCMS | `datocms` | GraphQL via `executeQuery` | API Token | Verfügbar |
 | Sanity | `sanity` | SDK (`@sanity/client`) + GROQ | Token (optional) | Verfügbar |
-| Prismic | `prismic` | SDK (`@prismicio/client`) | Access Token (optional) | Verfügbar |
+| Prismic | `prismic` | SDK (`@prismicio/client`) | Access Token (optional) | Getestet |
 | Strapi | `strapi` | REST (`safeFetch`) | API Token (Bearer) | Verfügbar |
 | Directus | `directus` | REST (`safeFetch`) | Static Token (Bearer) | Verfügbar |
 | Hygraph | `hygraph` | GraphQL (`safeFetch`) | Access Token (Bearer) | Verfügbar |
@@ -188,6 +188,60 @@ Nach `npm run dev` die folgenden Seiten im Browser öffnen:
 **Minimum:** Artikel (mit Headline, Slug, Body) + Kategorien + Autoren müssen im CMS existieren. Alle anderen Content-Typen (Newsticker, Videos, Navigation, Site-Config, Breaking News, Quiz, Stock Data) zeigen Fallback-Daten wenn sie fehlen.
 
 **Empfehlung zum Testen:** 3–5 Artikel mit je einer Kategorie und einem Autor anlegen. Das reicht für alle Seiten.
+
+#### Demo-Daten per Seed-Script erstellen
+
+Statt Inhalte manuell anzulegen, können die mitgelieferten Seed-Scripts ein komplettes Demo-Set erstellen: 8 Artikel, 6 Kategorien, 4 Autoren, 6 Newsticker-Einträge, Börsendaten und ein Tagesquiz — alles idempotent (wiederholtes Ausführen ist sicher).
+
+```bash
+# Contentful (Management API Token von https://app.contentful.com/account/profile/cma_tokens)
+node cms-seeds/seed-contentful.mjs \
+  --space-id <space-id> \
+  --management-token <cma-token> \
+  [--environment master]
+
+# Storyblok (Personal Access Token von app.storyblok.com → My Account)
+node cms-seeds/seed-storyblok.mjs \
+  --space-id <space-id> \
+  --token <personal-access-token>
+
+# WordPress.com (OAuth2 Bearer Token)
+node cms-seeds/seed-wordpress.mjs \
+  --site example.wordpress.com \
+  --token <bearer-token>
+
+# WordPress Self-Hosted (Application Password)
+node cms-seeds/seed-wordpress.mjs \
+  --url https://example.com \
+  --user admin \
+  --app-password <app-password>
+
+# Prismic (Permanent Access Token aus Settings → API & Security)
+node cms-seeds/seed-prismic.mjs \
+  --repository <repo-name> \
+  --write-token <token> \
+  --custom-types-token <token>
+
+# TYPO3 (DDEV + MySQL — kein REST-API, braucht laufendes DDEV-Projekt)
+bash cms-seeds/seed-typo3.sh \
+  [--project-dir ~/Desktop/typo3-demo]
+```
+
+##### Hinweise zu einzelnen CMS
+
+| CMS | Token-Typ | Besonderheit |
+|---|---|---|
+| **Contentful** | CMA Token (Management API) | Erstellt Content-Types + Einträge + publiziert automatisch |
+| **Storyblok** | Personal Access Token | Erstellt Components + Stories, publiziert automatisch |
+| **WordPress** | Bearer Token (WP.com) oder App Password (Self-Hosted) | Autoren = WordPress-User-Accounts, können nicht per Script erstellt werden |
+| **Prismic** | Permanent Access Token | Erstellt Custom Types + Dokumente als **Drafts** — nach dem Seed im Dashboard über "Migration release" publizieren |
+| **TYPO3** | Kein Token | Schreibt direkt in die DDEV-MySQL-Datenbank, DDEV muss laufen |
+
+##### Nach dem Seed
+
+1. `.env.local` auf das gesedte CMS umstellen (siehe Beispiele oben)
+2. **Prismic:** Im Dashboard alle Dokumente über "Migration release" publizieren (CDN liefert nur Published Content)
+3. `npm run dev` — die Seite sollte alle Demo-Inhalte anzeigen
 
 #### Field Mapping
 
