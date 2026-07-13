@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import ArticleCard from "@/components/ArticleCard";
 import StockWidget from "@/components/StockWidget";
-import QuizWidget from "@/components/QuizWidget";
 import {
   getArticles,
   getNewstickerItems,
@@ -14,6 +14,10 @@ import { SITE_CONFIG } from "@/lib/config";
 import { formatDuration } from "@/lib/format";
 import RelativeTime from "@/components/ui/RelativeTime";
 import SafeImage from "@/components/ui/SafeImage";
+
+const QuizWidget = dynamic(() => import("@/components/QuizWidget"), {
+  loading: () => null,
+});
 
 export const metadata: Metadata = {
   title: `Startseite | ${SITE_CONFIG.name}`,
@@ -174,6 +178,7 @@ export default async function HomePage() {
                     height={360}
                     fill
                     sizes="(max-width: 639px) calc(100vw - 2rem), (max-width: 1023px) calc(50vw - 3rem), 350px"
+                    quality={60}
                     className="object-cover"
                     unavailableLabel="Video nicht verfügbar"
                   />

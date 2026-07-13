@@ -33,7 +33,8 @@ export default function ArticleCard({
             height={IMAGE_DIMENSIONS.hero.height}
             fill
             priority
-            sizes="100vw"
+            sizes="(max-width: 1280px) 100vw, 1280px"
+            quality={75}
             className="object-cover"
             unavailableLabel="Bild nicht verfügbar"
           />
@@ -99,6 +100,7 @@ export default function ArticleCard({
             width={IMAGE_DIMENSIONS.compact.width}
             height={IMAGE_DIMENSIONS.compact.height}
             sizes="80px"
+            quality={50}
             className="object-cover w-full h-full"
             unavailableLabel="Bild nicht verfügbar"
           />
@@ -118,6 +120,7 @@ export default function ArticleCard({
           fill
           priority={priority}
           sizes="(max-width: 639px) calc(100vw - 2rem), (max-width: 1023px) calc(50vw - 3rem), 350px"
+          quality={60}
           className="object-cover group-hover:scale-105 transition-transform duration-300"
           unavailableLabel="Bild nicht verfügbar"
         />

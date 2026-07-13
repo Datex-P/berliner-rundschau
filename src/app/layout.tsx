@@ -1,15 +1,24 @@
 import "./globals.css";
 import type { Metadata } from "next";
+import dynamic from "next/dynamic";
 import { Plus_Jakarta_Sans, Inter } from "next/font/google";
 import SkipLink from "@/components/ui/SkipLink";
-import { ErrorReporter } from "@/components/ErrorReporter";
 import { ThemeProvider } from "@/components/ThemeProvider";
-import { FocusManager } from "@/components/FocusManager";
 import AppHeader from "@/components/AppHeader";
 import AppFooter from "@/components/AppFooter";
 import { getNavigation } from "@/lib/data";
 import { SITE_CONFIG } from "@/lib/config";
 import { cn } from "@/lib/utils";
+
+const ErrorReporter = dynamic(
+  () => import("@/components/ErrorReporter").then((m) => m.ErrorReporter),
+  { loading: () => null },
+);
+
+const FocusManager = dynamic(
+  () => import("@/components/FocusManager").then((m) => m.FocusManager),
+  { loading: () => null },
+);
 
 const plusJakarta = Plus_Jakarta_Sans({
   subsets: ["latin"],

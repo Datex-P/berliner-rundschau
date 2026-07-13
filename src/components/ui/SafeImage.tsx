@@ -15,6 +15,8 @@ interface SafeImageProps {
   className?: string;
   /** Next.js Image fill-Modus (ignoriert width/height) */
   fill?: boolean;
+  /** Bildqualitaet 1-100 (Default 75) */
+  quality?: number;
   /** Fallback-Text wenn Bild nicht ladbar — locale-spezifisch ueberschreiben */
   unavailableLabel?: string;
 }
@@ -28,6 +30,7 @@ export default function SafeImage({
   priority = false,
   className,
   fill = false,
+  quality,
   unavailableLabel = "Image unavailable",
 }: SafeImageProps) {
   const [hasError, setHasError] = useState(false);
@@ -59,6 +62,7 @@ export default function SafeImage({
       priority={priority}
       fetchPriority={priority ? "high" : undefined}
       fill={fill}
+      quality={quality}
       className={className}
       unoptimized={isLocalhost}
       onError={() => setHasError(true)}

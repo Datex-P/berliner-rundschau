@@ -11,7 +11,7 @@ export const SITE_CONFIG = {
 export const IMAGE_DIMENSIONS = {
   article: { width: 1200, height: 675 },
   hero: { width: 1200, height: 514 },
-  card: { width: 800, height: 450 },
+  card: { width: 640, height: 360 },
   compact: { width: 80, height: 80 },
   avatar: { width: 120, height: 120 },
   video: { width: 640, height: 360 },
