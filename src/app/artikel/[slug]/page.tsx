@@ -17,7 +17,8 @@ interface ArticlePageProps {
 
 export async function generateStaticParams(): Promise<{ slug: string }[]> {
   const articles = await getArticles();
-  return articles.map((a) => ({ slug: a.slug }));
+  const params = articles.map((a) => ({ slug: a.slug }));
+  return params.length > 0 ? params : [{ slug: "_placeholder" }];
 }
 
 export async function generateMetadata({

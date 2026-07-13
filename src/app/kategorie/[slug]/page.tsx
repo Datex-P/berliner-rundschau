@@ -15,7 +15,8 @@ interface CategoryPageProps {
 
 export async function generateStaticParams(): Promise<{ slug: string }[]> {
   const categories = await getCategories();
-  return categories.map((c) => ({ slug: c.slug }));
+  const params = categories.map((c) => ({ slug: c.slug }));
+  return params.length > 0 ? params : [{ slug: "_placeholder" }];
 }
 
 export async function generateMetadata({

@@ -18,7 +18,8 @@ interface AuthorPageProps {
 
 export async function generateStaticParams(): Promise<{ slug: string }[]> {
   const authors = await getAuthors();
-  return authors.map((a) => ({ slug: a.slug }));
+  const params = authors.map((a) => ({ slug: a.slug }));
+  return params.length > 0 ? params : [{ slug: "_placeholder" }];
 }
 
 export async function generateMetadata({
