@@ -1,6 +1,7 @@
 "use client";
 
-import { formatRelativeDate } from "@/lib/format";
+import { useState, useEffect } from "react";
+import { formatDate, formatRelativeDate } from "@/lib/format";
 
 interface RelativeTimeProps {
   dateTime: string;
@@ -11,9 +12,15 @@ export default function RelativeTime({
   dateTime,
   className,
 }: RelativeTimeProps) {
+  const [display, setDisplay] = useState(() => formatDate(dateTime));
+
+  useEffect(() => {
+    setDisplay(formatRelativeDate(dateTime));
+  }, [dateTime]);
+
   return (
     <time dateTime={dateTime} className={className} suppressHydrationWarning>
-      {formatRelativeDate(dateTime)}
+      {display}
     </time>
   );
 }

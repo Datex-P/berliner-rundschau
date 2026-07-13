@@ -1,8 +1,9 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import SafeImage from "@/components/ui/SafeImage";
-import { formatRelativeDate, formatReadingTime } from "@/lib/format";
+import { formatDate, formatRelativeDate, formatReadingTime } from "@/lib/format";
 import { routes } from "@/lib/navigation";
 import { cn } from "@/lib/utils";
 import type { ArticleAuthor } from "@/types";
@@ -22,6 +23,14 @@ export default function ArticleMeta({
   variant = "default",
   className = "",
 }: ArticleMetaProps) {
+  const [dateDisplay, setDateDisplay] = useState(() =>
+    formatDate(publicationDate),
+  );
+
+  useEffect(() => {
+    setDateDisplay(formatRelativeDate(publicationDate));
+  }, [publicationDate]);
+
   const textColor =
     variant === "light"
       ? "text-(--color-on-overlay)/70"
@@ -57,7 +66,7 @@ export default function ArticleMeta({
       </Link>
       <span aria-hidden="true">&middot;</span>
       <time dateTime={publicationDate} suppressHydrationWarning>
-        {formatRelativeDate(publicationDate)}
+        {dateDisplay}
       </time>
       {readingTimeMinutes != null && readingTimeMinutes > 0 && (
         <>
