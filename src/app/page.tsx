@@ -65,11 +65,12 @@ export default async function HomePage() {
             Aktuelle Nachrichten
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-            {remaining.map((article) => (
+            {remaining.map((article, index) => (
               <ArticleCard
                 key={article.id}
                 article={article}
                 headingLevel="h3"
+                eager={index === 0}
               />
             ))}
           </div>

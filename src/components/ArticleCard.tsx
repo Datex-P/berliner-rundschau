@@ -11,12 +11,14 @@ interface ArticleCardProps {
   article: Article;
   headingLevel?: "h2" | "h3" | "h4";
   variant?: "default" | "hero" | "compact";
+  eager?: boolean;
 }
 
 export default function ArticleCard({
   article,
   headingLevel = "h3",
   variant = "default",
+  eager = false,
 }: ArticleCardProps) {
   const Heading = headingLevel;
   const href = routes.article(article.slug);
@@ -30,6 +32,7 @@ export default function ArticleCard({
             alt={article.image.alt}
             fill
             priority
+            fetchPriority="high"
             sizes="(max-width: 1280px) 100vw, 1280px"
             quality={60}
             className="object-cover"
@@ -114,7 +117,7 @@ export default function ArticleCard({
           width={IMAGE_DIMENSIONS.card.width}
           height={IMAGE_DIMENSIONS.card.height}
           fill
-          loading="lazy"
+          loading={eager ? "eager" : "lazy"}
           sizes="(max-width: 639px) calc(100vw - 2rem), (max-width: 1023px) calc(50vw - 3rem), 350px"
           quality={60}
           className="object-cover group-hover:scale-105 transition-transform duration-300"
