@@ -3,6 +3,7 @@ import { sanitizeRichText } from "./sanitize";
 import { normalizeImage } from "./image-utils";
 import { parseFieldMap } from "./field-map";
 import { safeFetch, sanitizeError } from "./http";
+import type { Article, Category, Author, NewstickerItem, Video, Navigation, SiteConfig, BreakingNews, Quiz, StockData } from "@/types";
 
 /* ---------- config ---------- */
 
@@ -52,7 +53,7 @@ async function wpFetch<T>(path: string): Promise<T> {
 async function fetchAllPaginated(
   endpoint: string,
   extraParams = "",
-): Promise<unknown[]> {
+) {
   const items: unknown[] = [];
   let page = 1;
   let totalPages = 1;
@@ -172,23 +173,23 @@ function mapAuthor(user: Record<string, unknown>): unknown {
 
 /* ---------- adapter ---------- */
 
-const wordpressAdapter: CmsAdapter = {
+const wordpressAdapter = {
   name: "wordpress",
 
-  async fetchAllArticles(): Promise<unknown[]> {
+  async fetchAllArticles() {
     const items = await fetchAllPaginated(postType);
-    return (items as Record<string, unknown>[]).map(mapPost);
+    return (items as Record<string, unknown>[]).map(mapPost) as unknown as Article[];
   },
 
-  async fetchArticleBySlug(slug: string): Promise<unknown | null> {
+  async fetchArticleBySlug(slug: string) {
     const items = await wpFetch<Record<string, unknown>[]>(
       `/${postType}?slug=${encodeURIComponent(slug)}&_embed`,
     );
     if (!Array.isArray(items) || items.length === 0) return null;
-    return mapPost(items[0]);
+    return mapPost(items[0]) as unknown as Article;
   },
 
-  async fetchArticlesByCategory(categorySlug: string): Promise<unknown[]> {
+  async fetchArticlesByCategory(categorySlug: string) {
     /* Resolve category ID by slug first */
     const cats = await wpFetch<Record<string, unknown>[]>(
       `/categories?slug=${encodeURIComponent(categorySlug)}`,
@@ -201,18 +202,18 @@ const wordpressAdapter: CmsAdapter = {
       postType,
       `&categories=${encodeURIComponent(catId)}`,
     );
-    return (items as Record<string, unknown>[]).map(mapPost);
+    return (items as Record<string, unknown>[]).map(mapPost) as unknown as Article[];
   },
 
-  async searchArticlesByQuery(query: string): Promise<unknown[]> {
+  async searchArticlesByQuery(query: string) {
     const items = await wpFetch<Record<string, unknown>[]>(
       `/${postType}?search=${encodeURIComponent(query)}&_embed`,
     );
     if (!Array.isArray(items)) return [];
-    return items.map(mapPost);
+    return items.map(mapPost) as unknown as Article[];
   },
 
-  async fetchArticleSlugs(): Promise<unknown[]> {
+  async fetchArticleSlugs() {
     /* Lightweight fetch: only slug + modified, no _embed */
     const items: unknown[] = [];
     let page = 1;
@@ -236,13 +237,13 @@ const wordpressAdapter: CmsAdapter = {
       page++;
     }
 
-    return items;
+    return items as unknown as Array<{ slug: string; modified?: string }>;
   },
 
-  async fetchAllCategories(): Promise<unknown[]> {
+  async fetchAllCategories() {
     try {
       const items = await fetchAllPaginated("categories", "&hide_empty=true");
-      return (items as Record<string, unknown>[]).map(mapCategory);
+      return (items as Record<string, unknown>[]).map(mapCategory) as unknown as Category[];
     } catch (err: unknown) {
       console.error(
         "[wordpress] fetchAllCategories failed:",
@@ -252,13 +253,13 @@ const wordpressAdapter: CmsAdapter = {
     }
   },
 
-  async fetchCategoryBySlug(slug: string): Promise<unknown | null> {
+  async fetchCategoryBySlug(slug: string) {
     try {
       const items = await wpFetch<Record<string, unknown>[]>(
         `/categories?slug=${encodeURIComponent(slug)}`,
       );
       if (!Array.isArray(items) || items.length === 0) return null;
-      return mapCategory(items[0]);
+      return mapCategory(items[0]) as unknown as Category;
     } catch (err: unknown) {
       console.error(
         "[wordpress] fetchCategoryBySlug failed:",
@@ -268,23 +269,23 @@ const wordpressAdapter: CmsAdapter = {
     }
   },
 
-  async fetchAllAuthors(): Promise<unknown[]> {
+  async fetchAllAuthors() {
     try {
       const items = await fetchAllPaginated("users");
-      return (items as Record<string, unknown>[]).map(mapAuthor);
+      return (items as Record<string, unknown>[]).map(mapAuthor) as unknown as Author[];
     } catch (err: unknown) {
       console.error("[wordpress] fetchAllAuthors failed:", sanitizeError(err));
       return [];
     }
   },
 
-  async fetchAuthorBySlug(slug: string): Promise<unknown | null> {
+  async fetchAuthorBySlug(slug: string) {
     try {
       const items = await wpFetch<Record<string, unknown>[]>(
         `/users?slug=${encodeURIComponent(slug)}`,
       );
       if (!Array.isArray(items) || items.length === 0) return null;
-      return mapAuthor(items[0]);
+      return mapAuthor(items[0]) as unknown as Author;
     } catch (err: unknown) {
       console.error(
         "[wordpress] fetchAuthorBySlug failed:",
@@ -294,7 +295,7 @@ const wordpressAdapter: CmsAdapter = {
     }
   },
 
-  async fetchArticlesByAuthor(authorSlug: string): Promise<unknown[]> {
+  async fetchArticlesByAuthor(authorSlug: string) {
     /* Resolve author ID by slug first */
     const users = await wpFetch<Record<string, unknown>[]>(
       `/users?slug=${encodeURIComponent(authorSlug)}`,
@@ -307,26 +308,26 @@ const wordpressAdapter: CmsAdapter = {
       postType,
       `&author=${encodeURIComponent(authorId)}`,
     );
-    return (items as Record<string, unknown>[]).map(mapPost);
+    return (items as Record<string, unknown>[]).map(mapPost) as unknown as Article[];
   },
 
   /* WordPress has no built-in newsticker endpoint */
-  async fetchNewsticker(): Promise<unknown[]> {
+  async fetchNewsticker() {
     return [];
   },
 
   /* WordPress has no built-in video endpoint */
-  async fetchVideos(): Promise<unknown[]> {
+  async fetchVideos() {
     return [];
   },
 
   /* WordPress menus via the REST API v2 (requires WP 5.9+ block themes or nav menu plugin) */
-  async fetchNavigation(): Promise<unknown> {
+  async fetchNavigation() {
     try {
       const menus = await wpFetch<Record<string, unknown>[]>(
         "/menu-items?menus=primary&per_page=100",
       );
-      if (!Array.isArray(menus)) return { items: [] };
+      if (!Array.isArray(menus)) return { items: [] } as unknown as Navigation;
       return {
         items: menus.map((item) => ({
           id: String(item.id ?? ""),
@@ -337,14 +338,14 @@ const wordpressAdapter: CmsAdapter = {
           parent: item.parent ? String(item.parent) : null,
           order: Number(item.menu_order ?? 0),
         })),
-      };
+      } as unknown as Navigation;
     } catch {
-      return { items: [] };
+      return { items: [] } as unknown as Navigation;
     }
   },
 
   /* Use WP Site Settings from the index endpoint */
-  async fetchSiteConfig(): Promise<unknown> {
+  async fetchSiteConfig() {
     try {
       const res = await safeFetch(`${baseUrl}/wp-json`, {
         headers: { ...authHeaders(), Accept: "application/json" },
@@ -355,26 +356,26 @@ const wordpressAdapter: CmsAdapter = {
         description: String(data.description ?? ""),
         url: String(data.url ?? ""),
         timezone: String(data.timezone_string ?? ""),
-      };
+      } as unknown as SiteConfig;
     } catch {
-      return {};
+      return {} as unknown as SiteConfig;
     }
   },
 
   /* WordPress has no built-in breaking news endpoint */
-  async fetchBreakingNews(): Promise<unknown[]> {
+  async fetchBreakingNews() {
     return [];
   },
 
   /* WordPress has no built-in quiz endpoint */
-  async fetchQuiz(): Promise<unknown> {
-    return null;
+  async fetchQuiz() {
+    return null as unknown as Quiz;
   },
 
   /* WordPress has no built-in stock data endpoint */
-  async fetchStockData(): Promise<unknown> {
-    return null;
+  async fetchStockData() {
+    return null as unknown as StockData;
   },
 };
 
-export default wordpressAdapter;
+export default wordpressAdapter as unknown as CmsAdapter;

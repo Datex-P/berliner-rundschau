@@ -3,6 +3,7 @@ import { sanitizeRichText } from "./sanitize";
 import { normalizeImage } from "./image-utils";
 import { parseFieldMap, mapField } from "./field-map";
 import { safeFetch, sanitizeError } from "./http";
+import type { Article, Category, Author, NewstickerItem, Video, Navigation, SiteConfig, BreakingNews, Quiz, StockData } from "@/types";
 
 /* ---------- config ---------- */
 
@@ -39,7 +40,7 @@ async function directusFetch<T>(path: string): Promise<T> {
 async function fetchAllItems(
   col: string,
   extraParams = "",
-): Promise<unknown[]> {
+) {
   const items: unknown[] = [];
   let offset = 0;
   const limit = 100;
@@ -65,7 +66,7 @@ async function fetchAllItems(
 async function safeFetchAll(
   col: string,
   extraParams = "",
-): Promise<unknown[]> {
+) {
   try {
     return await fetchAllItems(col, extraParams);
   } catch (err: unknown) {
@@ -78,7 +79,7 @@ async function safeFetchAll(
 async function safeFetchFirst(
   col: string,
   extraParams = "",
-): Promise<unknown | null> {
+) {
   try {
     const sep = extraParams ? `&${extraParams}` : "";
     const url = `${baseUrl}/items/${col}?limit=1${sep}`;
@@ -211,47 +212,47 @@ function mapAuthor(item: Record<string, unknown>): unknown {
 
 /* ---------- adapter ---------- */
 
-const directusAdapter: CmsAdapter = {
+const directusAdapter = {
   name: "directus",
 
-  async fetchAllArticles(): Promise<unknown[]> {
+  async fetchAllArticles() {
     const items = await fetchAllItems(
       collection,
       `sort=-date_created&${ARTICLE_FIELDS}`,
     );
-    return items.map((i) => mapItem(i as Record<string, unknown>));
+    return items.map((i) => mapItem(i as Record<string, unknown>)) as unknown as Article[];
   },
 
-  async fetchArticleBySlug(slug: string): Promise<unknown | null> {
+  async fetchArticleBySlug(slug: string) {
     try {
       const items = await directusFetch<unknown[]>(
         `/items/${collection}?filter[${mf("slug")}][_eq]=${encodeURIComponent(slug)}&${ARTICLE_FIELDS}&limit=1`,
       );
       if (!items || items.length === 0) return null;
-      return mapItem(items[0] as Record<string, unknown>);
+      return mapItem(items[0] as Record<string, unknown>) as unknown as Article;
     } catch (err: unknown) {
       console.warn(`[directus] fetchArticleBySlug failed: ${sanitizeError(err)}`);
       return null;
     }
   },
 
-  async fetchArticlesByCategory(categorySlug: string): Promise<unknown[]> {
+  async fetchArticlesByCategory(categorySlug: string) {
     const items = await safeFetchAll(
       collection,
       `filter[${mf("category")}][slug][_eq]=${encodeURIComponent(categorySlug)}&${ARTICLE_FIELDS}&sort=-date_created`,
     );
-    return items.map((i) => mapItem(i as Record<string, unknown>));
+    return items.map((i) => mapItem(i as Record<string, unknown>)) as unknown as Article[];
   },
 
-  async searchArticlesByQuery(query: string): Promise<unknown[]> {
+  async searchArticlesByQuery(query: string) {
     const items = await safeFetchAll(
       collection,
       `search=${encodeURIComponent(query)}&${ARTICLE_FIELDS}&sort=-date_created`,
     );
-    return items.map((i) => mapItem(i as Record<string, unknown>));
+    return items.map((i) => mapItem(i as Record<string, unknown>)) as unknown as Article[];
   },
 
-  async fetchArticleSlugs(): Promise<unknown[]> {
+  async fetchArticleSlugs() {
     const items = await fetchAllItems(
       collection,
       `fields=${mf("slug")},date_updated`,
@@ -262,46 +263,46 @@ const directusAdapter: CmsAdapter = {
         slug: String(item[mf("slug")] ?? ""),
         updatedAt: String(item.date_updated ?? ""),
       };
-    });
+    }) as unknown as Array<{ slug: string; modified?: string }>;
   },
 
-  async fetchAllCategories(): Promise<unknown[]> {
+  async fetchAllCategories() {
     const items = await safeFetchAll("categories", "sort=name");
-    return items.map((i) => mapCategory(i as Record<string, unknown>));
+    return items.map((i) => mapCategory(i as Record<string, unknown>)) as unknown as Category[];
   },
 
-  async fetchCategoryBySlug(slug: string): Promise<unknown | null> {
+  async fetchCategoryBySlug(slug: string) {
     const item = await safeFetchFirst(
       "categories",
       `filter[slug][_eq]=${encodeURIComponent(slug)}`,
     );
     if (!item) return null;
-    return mapCategory(item as Record<string, unknown>);
+    return mapCategory(item as Record<string, unknown>) as unknown as Category;
   },
 
-  async fetchAllAuthors(): Promise<unknown[]> {
+  async fetchAllAuthors() {
     const items = await safeFetchAll("authors", "sort=name&fields=*,avatar.*");
-    return items.map((i) => mapAuthor(i as Record<string, unknown>));
+    return items.map((i) => mapAuthor(i as Record<string, unknown>)) as unknown as Author[];
   },
 
-  async fetchAuthorBySlug(slug: string): Promise<unknown | null> {
+  async fetchAuthorBySlug(slug: string) {
     const item = await safeFetchFirst(
       "authors",
       `filter[slug][_eq]=${encodeURIComponent(slug)}&fields=*,avatar.*`,
     );
     if (!item) return null;
-    return mapAuthor(item as Record<string, unknown>);
+    return mapAuthor(item as Record<string, unknown>) as unknown as Author;
   },
 
-  async fetchArticlesByAuthor(authorSlug: string): Promise<unknown[]> {
+  async fetchArticlesByAuthor(authorSlug: string) {
     const items = await safeFetchAll(
       collection,
       `filter[${mf("author")}][slug][_eq]=${encodeURIComponent(authorSlug)}&${ARTICLE_FIELDS}&sort=-date_created`,
     );
-    return items.map((i) => mapItem(i as Record<string, unknown>));
+    return items.map((i) => mapItem(i as Record<string, unknown>)) as unknown as Article[];
   },
 
-  async fetchNewsticker(): Promise<unknown[]> {
+  async fetchNewsticker() {
     const items = await safeFetchAll(
       "newsticker",
       "sort=-date_created&limit=20",
@@ -315,10 +316,10 @@ const directusAdapter: CmsAdapter = {
         timestamp: String(item.date_created ?? ""),
         url: String(item.url ?? ""),
       };
-    });
+    }) as unknown as NewstickerItem[];
   },
 
-  async fetchVideos(): Promise<unknown[]> {
+  async fetchVideos() {
     const items = await safeFetchAll("videos", "sort=-date_created");
     return items.map((i) => {
       const item = i as Record<string, unknown>;
@@ -330,25 +331,25 @@ const directusAdapter: CmsAdapter = {
         duration: Number(item.duration ?? 0),
         publishedAt: String(item.date_created ?? ""),
       };
-    });
+    }) as unknown as Video[];
   },
 
-  async fetchNavigation(): Promise<unknown> {
+  async fetchNavigation() {
     const item = await safeFetchFirst("navigation");
-    if (!item) return { items: [] };
+    if (!item) return { items: [] } as unknown as Navigation;
     const nav = item as Record<string, unknown>;
     return {
       items: Array.isArray(nav.items) ? nav.items : [],
-    };
+    } as unknown as Navigation;
   },
 
-  async fetchSiteConfig(): Promise<unknown> {
+  async fetchSiteConfig() {
     const item = await safeFetchFirst("site_config");
-    if (!item) return {};
-    return item;
+    if (!item) return {} as unknown as SiteConfig;
+    return item as unknown as SiteConfig;
   },
 
-  async fetchBreakingNews(): Promise<unknown[]> {
+  async fetchBreakingNews() {
     const items = await safeFetchAll(
       "breaking_news",
       "sort=-date_created&limit=5",
@@ -363,10 +364,10 @@ const directusAdapter: CmsAdapter = {
         severity: String(item.severity ?? "normal"),
         timestamp: String(item.date_created ?? ""),
       };
-    });
+    }) as unknown as BreakingNews[];
   },
 
-  async fetchQuiz(): Promise<unknown> {
+  async fetchQuiz() {
     const item = await safeFetchFirst("quiz", "sort=-date_created");
     if (!item) return null;
     const quiz = item as Record<string, unknown>;
@@ -374,18 +375,18 @@ const directusAdapter: CmsAdapter = {
       id: String(quiz.id ?? ""),
       title: String(quiz.title ?? ""),
       questions: Array.isArray(quiz.questions) ? quiz.questions : [],
-    };
+    } as unknown as Quiz;
   },
 
-  async fetchStockData(): Promise<unknown> {
+  async fetchStockData() {
     const item = await safeFetchFirst("stock_data", "sort=-date_updated");
     if (!item) return null;
     const stock = item as Record<string, unknown>;
     return {
       stocks: Array.isArray(stock.stocks) ? stock.stocks : [],
       updatedAt: String(stock.date_updated ?? ""),
-    };
+    } as unknown as StockData;
   },
 };
 
-export default directusAdapter;
+export default directusAdapter as unknown as CmsAdapter;

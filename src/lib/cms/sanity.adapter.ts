@@ -4,6 +4,7 @@ import type { CmsAdapter } from "./types";
 import { sanitizeRichText } from "./sanitize";
 import { normalizeImage } from "./image-utils";
 import { parseFieldMap, mapField } from "./field-map";
+import type { Article, Category, Author, NewstickerItem, Video, Navigation, SiteConfig, BreakingNews, Quiz, StockData } from "@/types";
 
 /* ---------- client setup ---------- */
 
@@ -167,46 +168,46 @@ function mapAuthor(record: Record<string, unknown>): unknown {
 
 /* ---------- adapter ---------- */
 
-const sanityAdapter: CmsAdapter = {
+const sanityAdapter = {
   name: "sanity",
 
-  async fetchAllArticles(): Promise<unknown[]> {
+  async fetchAllArticles() {
     const results = await safeQuery<Record<string, unknown>[]>(
       `*[_type == $type] | order(_createdAt desc) ${ARTICLE_PROJECTION}`,
       { type: articleType },
       [],
     );
-    return results.map(mapRecord);
+    return results.map(mapRecord) as unknown as Article[];
   },
 
-  async fetchArticleBySlug(slug: string): Promise<unknown | null> {
+  async fetchArticleBySlug(slug: string) {
     const result = await safeQuery<Record<string, unknown> | null>(
       `*[_type == $type && slug.current == $slug][0] ${ARTICLE_PROJECTION}`,
       { type: articleType, slug },
       null,
     );
-    return result ? mapRecord(result) : null;
+    return (result ? mapRecord(result) : null) as unknown as Article | null;
   },
 
-  async fetchArticlesByCategory(categorySlug: string): Promise<unknown[]> {
+  async fetchArticlesByCategory(categorySlug: string) {
     const results = await safeQuery<Record<string, unknown>[]>(
       `*[_type == $type && category->slug.current == $slug] | order(_createdAt desc) ${ARTICLE_PROJECTION}`,
       { type: articleType, slug: categorySlug },
       [],
     );
-    return results.map(mapRecord);
+    return results.map(mapRecord) as unknown as Article[];
   },
 
-  async searchArticlesByQuery(query: string): Promise<unknown[]> {
+  async searchArticlesByQuery(query: string) {
     const results = await safeQuery<Record<string, unknown>[]>(
       `*[_type == $type && [headline, teaser] match $query] | order(_createdAt desc) ${ARTICLE_PROJECTION}`,
       { type: articleType, query: `${query}*` },
       [],
     );
-    return results.map(mapRecord);
+    return results.map(mapRecord) as unknown as Article[];
   },
 
-  async fetchArticleSlugs(): Promise<unknown[]> {
+  async fetchArticleSlugs() {
     const results = await safeQuery<Record<string, unknown>[]>(
       `*[_type == $type] { "slug": slug.current, "updatedAt": _updatedAt }`,
       { type: articleType },
@@ -215,55 +216,55 @@ const sanityAdapter: CmsAdapter = {
     return results.map((r) => ({
       slug: String(r.slug ?? ""),
       updatedAt: String(r.updatedAt ?? ""),
-    }));
+    })) as unknown as Array<{ slug: string; modified?: string }>;
   },
 
-  async fetchAllCategories(): Promise<unknown[]> {
+  async fetchAllCategories() {
     const results = await safeQuery<Record<string, unknown>[]>(
       `*[_type == "category"] | order(name asc) { _id, name, slug, description, color }`,
       {},
       [],
     );
-    return results.map(mapCategory);
+    return results.map(mapCategory) as unknown as Category[];
   },
 
-  async fetchCategoryBySlug(slug: string): Promise<unknown | null> {
+  async fetchCategoryBySlug(slug: string) {
     const result = await safeQuery<Record<string, unknown> | null>(
       `*[_type == "category" && slug.current == $slug][0] { _id, name, slug, description, color }`,
       { slug },
       null,
     );
-    return result ? mapCategory(result) : null;
+    return (result ? mapCategory(result) : null) as unknown as Category | null;
   },
 
-  async fetchAllAuthors(): Promise<unknown[]> {
+  async fetchAllAuthors() {
     const results = await safeQuery<Record<string, unknown>[]>(
       `*[_type == "author"] | order(name asc) { _id, name, slug, bio, role, avatar { asset-> { url } } }`,
       {},
       [],
     );
-    return results.map(mapAuthor);
+    return results.map(mapAuthor) as unknown as Author[];
   },
 
-  async fetchAuthorBySlug(slug: string): Promise<unknown | null> {
+  async fetchAuthorBySlug(slug: string) {
     const result = await safeQuery<Record<string, unknown> | null>(
       `*[_type == "author" && slug.current == $slug][0] { _id, name, slug, bio, role, avatar { asset-> { url } } }`,
       { slug },
       null,
     );
-    return result ? mapAuthor(result) : null;
+    return (result ? mapAuthor(result) : null) as unknown as Author | null;
   },
 
-  async fetchArticlesByAuthor(authorSlug: string): Promise<unknown[]> {
+  async fetchArticlesByAuthor(authorSlug: string) {
     const results = await safeQuery<Record<string, unknown>[]>(
       `*[_type == $type && author->slug.current == $slug] | order(_createdAt desc) ${ARTICLE_PROJECTION}`,
       { type: articleType, slug: authorSlug },
       [],
     );
-    return results.map(mapRecord);
+    return results.map(mapRecord) as unknown as Article[];
   },
 
-  async fetchNewsticker(): Promise<unknown[]> {
+  async fetchNewsticker() {
     const results = await safeQuery<Record<string, unknown>[]>(
       `*[_type == "newsticker"] | order(_createdAt desc) [0...20] { _id, headline, href, topic, isPremium, _createdAt }`,
       {},
@@ -279,10 +280,10 @@ const sanityAdapter: CmsAdapter = {
       },
       publicationDate: String(r._createdAt ?? ""),
       isPremium: r.isPremium === true,
-    }));
+    })) as unknown as NewstickerItem[];
   },
 
-  async fetchVideos(): Promise<unknown[]> {
+  async fetchVideos() {
     const results = await safeQuery<Record<string, unknown>[]>(
       `*[_type == "video"] | order(_createdAt desc) { _id, title, url, thumbnail, duration, _createdAt }`,
       {},
@@ -295,31 +296,31 @@ const sanityAdapter: CmsAdapter = {
       thumbnail: String(r.thumbnail ?? ""),
       duration: Number(r.duration ?? 0),
       publishedAt: String(r._createdAt ?? ""),
-    }));
+    })) as unknown as Video[];
   },
 
-  async fetchNavigation(): Promise<unknown> {
+  async fetchNavigation() {
     const result = await safeQuery<Record<string, unknown> | null>(
       `*[_type == "navigation"][0]`,
       {},
       null,
     );
-    if (!result) return { items: [] };
+    if (!result) return { items: [] } as unknown as Navigation;
     return {
       items: Array.isArray(result.items) ? result.items : [],
-    };
+    } as unknown as Navigation;
   },
 
-  async fetchSiteConfig(): Promise<unknown> {
+  async fetchSiteConfig() {
     const result = await safeQuery<Record<string, unknown> | null>(
       `*[_type == "siteConfig"][0]`,
       {},
       null,
     );
-    return result ?? {};
+    return (result ?? {}) as unknown as SiteConfig;
   },
 
-  async fetchBreakingNews(): Promise<unknown[]> {
+  async fetchBreakingNews() {
     const results = await safeQuery<Record<string, unknown>[]>(
       `*[_type == "breakingNews"] | order(_createdAt desc) [0...5] { _id, headline, text, url, severity, _createdAt }`,
       {},
@@ -332,10 +333,10 @@ const sanityAdapter: CmsAdapter = {
       url: String(r.url ?? ""),
       severity: String(r.severity ?? "normal"),
       timestamp: String(r._createdAt ?? ""),
-    }));
+    })) as unknown as BreakingNews[];
   },
 
-  async fetchQuiz(): Promise<unknown> {
+  async fetchQuiz() {
     const result = await safeQuery<Record<string, unknown> | null>(
       `*[_type == "quiz"][0] { _id, json }`,
       {},
@@ -344,13 +345,13 @@ const sanityAdapter: CmsAdapter = {
     if (!result) return null;
     const jsonStr = String(result.json ?? "{}");
     try {
-      return JSON.parse(jsonStr);
+      return JSON.parse(jsonStr) as unknown as Quiz;
     } catch {
       return null;
     }
   },
 
-  async fetchStockData(): Promise<unknown> {
+  async fetchStockData() {
     const result = await safeQuery<Record<string, unknown> | null>(
       `*[_type == "stockData"][0] { _id, json }`,
       {},
@@ -359,11 +360,11 @@ const sanityAdapter: CmsAdapter = {
     if (!result) return null;
     const jsonStr = String(result.json ?? "{}");
     try {
-      return JSON.parse(jsonStr);
+      return JSON.parse(jsonStr) as unknown as StockData;
     } catch {
       return null;
     }
   },
 };
 
-export default sanityAdapter;
+export default sanityAdapter as unknown as CmsAdapter;

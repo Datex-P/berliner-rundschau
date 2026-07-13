@@ -3,6 +3,7 @@ import type { CmsAdapter } from "./types";
 import { sanitizeRichText } from "./sanitize";
 import { normalizeImage } from "./image-utils";
 import { parseFieldMap, mapField } from "./field-map";
+import type { Article, Category, Author, NewstickerItem, Video, Navigation, SiteConfig, BreakingNews, Quiz, StockData } from "@/types";
 
 /* ---------- client setup ---------- */
 
@@ -23,7 +24,7 @@ function mf(name: string): string {
 async function safeFetchAllByType(
   type: string,
   params?: Parameters<typeof client.getAllByType>[1],
-): Promise<unknown[]> {
+) {
   try {
     return await client.getAllByType(type, params);
   } catch {
@@ -35,7 +36,7 @@ async function safeFetchAllByType(
 async function safeFetchByUID(
   type: string,
   uid: string,
-): Promise<unknown | null> {
+) {
   try {
     return await client.getByUID(type, uid);
   } catch {
@@ -46,7 +47,7 @@ async function safeFetchByUID(
 /* ---------- entry mappers ---------- */
 
 function mapDocument(doc: Record<string, unknown>): unknown {
-  const data = (doc.data ?? {}) as Record<string, unknown>;
+  const data = (doc.data ?? {}) as unknown as Record<string, unknown>;
 
   const bodyField = data[mf("body")];
   const bodyHtml =
@@ -54,14 +55,14 @@ function mapDocument(doc: Record<string, unknown>): unknown {
       ? sanitizeRichText(prismic.asHTML(bodyField as prismic.RichTextField))
       : "";
 
-  const imgField = data[mf("image")] as Record<string, unknown> | null;
-  const dims = imgField?.dimensions as Record<string, unknown> | null;
+  const imgField = data[mf("image")] as unknown as Record<string, unknown> | null;
+  const dims = imgField?.dimensions as unknown as Record<string, unknown> | null;
 
-  const catRef = data[mf("category")] as Record<string, unknown> | null;
-  const catData = catRef?.data as Record<string, unknown> | null;
+  const catRef = data[mf("category")] as unknown as Record<string, unknown> | null;
+  const catData = catRef?.data as unknown as Record<string, unknown> | null;
 
-  const authRef = data[mf("author")] as Record<string, unknown> | null;
-  const authData = authRef?.data as Record<string, unknown> | null;
+  const authRef = data[mf("author")] as unknown as Record<string, unknown> | null;
+  const authData = authRef?.data as unknown as Record<string, unknown> | null;
 
   return {
     id: String(doc.id ?? ""),
@@ -90,7 +91,7 @@ function mapDocument(doc: Record<string, unknown>): unknown {
           name: String(authData.name ?? ""),
           slug: String(authRef?.uid ?? ""),
           avatar: String(
-            (authData.avatar as Record<string, unknown>)?.url ?? "",
+            (authData.avatar as unknown as Record<string, unknown>)?.url ?? "",
           ),
         }
       : { id: "", name: "", slug: "", avatar: "" },
@@ -110,7 +111,7 @@ function mapDocument(doc: Record<string, unknown>): unknown {
 }
 
 function mapCategory(doc: Record<string, unknown>): unknown {
-  const data = (doc.data ?? {}) as Record<string, unknown>;
+  const data = (doc.data ?? {}) as unknown as Record<string, unknown>;
   return {
     id: String(doc.id ?? ""),
     name: String(data.name ?? ""),
@@ -121,8 +122,8 @@ function mapCategory(doc: Record<string, unknown>): unknown {
 }
 
 function mapAuthor(doc: Record<string, unknown>): unknown {
-  const data = (doc.data ?? {}) as Record<string, unknown>;
-  const avatarField = data.avatar as Record<string, unknown> | null;
+  const data = (doc.data ?? {}) as unknown as Record<string, unknown>;
+  const avatarField = data.avatar as unknown as Record<string, unknown> | null;
   return {
     id: String(doc.id ?? ""),
     name: String(data.name ?? ""),
@@ -135,26 +136,26 @@ function mapAuthor(doc: Record<string, unknown>): unknown {
 
 /* ---------- adapter ---------- */
 
-const prismicAdapter: CmsAdapter = {
+const prismicAdapter = {
   name: "prismic",
 
-  async fetchAllArticles(): Promise<unknown[]> {
+  async fetchAllArticles() {
     const docs = await client.getAllByType(articleType);
     return docs.map((d) =>
       mapDocument(d as unknown as Record<string, unknown>),
-    );
+    ) as unknown as Article[];
   },
 
-  async fetchArticleBySlug(slug: string): Promise<unknown | null> {
+  async fetchArticleBySlug(slug: string) {
     const doc = await safeFetchByUID(articleType, slug);
     if (!doc) return null;
-    return mapDocument(doc as Record<string, unknown>);
+    return mapDocument(doc as unknown as Record<string, unknown>) as unknown as Article;
   },
 
-  async fetchArticlesByCategory(categorySlug: string): Promise<unknown[]> {
+  async fetchArticlesByCategory(categorySlug: string) {
     const cat = await safeFetchByUID("category", categorySlug);
     if (!cat) return [];
-    const catId = String((cat as Record<string, unknown>).id ?? "");
+    const catId = String((cat as unknown as Record<string, unknown>).id ?? "");
     if (!catId) return [];
 
     const docs = await client.getAllByType(articleType, {
@@ -162,19 +163,19 @@ const prismicAdapter: CmsAdapter = {
     });
     return docs.map((d) =>
       mapDocument(d as unknown as Record<string, unknown>),
-    );
+    ) as unknown as Article[];
   },
 
-  async searchArticlesByQuery(query: string): Promise<unknown[]> {
+  async searchArticlesByQuery(query: string) {
     const docs = await client.getAllByType(articleType, {
       filters: [prismic.filter.fulltext("document", query)],
     });
     return docs.map((d) =>
       mapDocument(d as unknown as Record<string, unknown>),
-    );
+    ) as unknown as Article[];
   },
 
-  async fetchArticleSlugs(): Promise<unknown[]> {
+  async fetchArticleSlugs() {
     const docs = await client.getAllByType(articleType);
     return docs.map((d) => ({
       slug: d.uid,
@@ -182,32 +183,32 @@ const prismicAdapter: CmsAdapter = {
     }));
   },
 
-  async fetchAllCategories(): Promise<unknown[]> {
+  async fetchAllCategories() {
     const docs = await safeFetchAllByType("category");
-    return docs.map((d) => mapCategory(d as Record<string, unknown>));
+    return docs.map((d) => mapCategory(d as unknown as Record<string, unknown>)) as unknown as Category[];
   },
 
-  async fetchCategoryBySlug(slug: string): Promise<unknown | null> {
+  async fetchCategoryBySlug(slug: string) {
     const doc = await safeFetchByUID("category", slug);
     if (!doc) return null;
-    return mapCategory(doc as Record<string, unknown>);
+    return mapCategory(doc as unknown as Record<string, unknown>) as unknown as Category;
   },
 
-  async fetchAllAuthors(): Promise<unknown[]> {
+  async fetchAllAuthors() {
     const docs = await safeFetchAllByType("author");
-    return docs.map((d) => mapAuthor(d as Record<string, unknown>));
+    return docs.map((d) => mapAuthor(d as unknown as Record<string, unknown>)) as unknown as Author[];
   },
 
-  async fetchAuthorBySlug(slug: string): Promise<unknown | null> {
+  async fetchAuthorBySlug(slug: string) {
     const doc = await safeFetchByUID("author", slug);
     if (!doc) return null;
-    return mapAuthor(doc as Record<string, unknown>);
+    return mapAuthor(doc as unknown as Record<string, unknown>) as unknown as Author;
   },
 
-  async fetchArticlesByAuthor(authorSlug: string): Promise<unknown[]> {
+  async fetchArticlesByAuthor(authorSlug: string) {
     const author = await safeFetchByUID("author", authorSlug);
     if (!author) return [];
-    const authorId = String((author as Record<string, unknown>).id ?? "");
+    const authorId = String((author as unknown as Record<string, unknown>).id ?? "");
     if (!authorId) return [];
 
     const docs = await client.getAllByType(articleType, {
@@ -215,10 +216,10 @@ const prismicAdapter: CmsAdapter = {
     });
     return docs.map((d) =>
       mapDocument(d as unknown as Record<string, unknown>),
-    );
+    ) as unknown as Article[];
   },
 
-  async fetchNewsticker(): Promise<unknown[]> {
+  async fetchNewsticker() {
     const docs = await safeFetchAllByType("newsticker", {
       orderings: [
         { field: "document.first_publication_date", direction: "desc" },
@@ -226,8 +227,8 @@ const prismicAdapter: CmsAdapter = {
       pageSize: 20,
     });
     return docs.map((d) => {
-      const doc = d as Record<string, unknown>;
-      const data = (doc.data ?? {}) as Record<string, unknown>;
+      const doc = d as unknown as Record<string, unknown>;
+      const data = (doc.data ?? {}) as unknown as Record<string, unknown>;
       return {
         id: String(doc.id ?? ""),
         type: "TimelineTeaser",
@@ -239,18 +240,18 @@ const prismicAdapter: CmsAdapter = {
         publicationDate: String(doc.first_publication_date ?? ""),
         isPremium: data.isPremium === true,
       };
-    });
+    }) as unknown as NewstickerItem[];
   },
 
-  async fetchVideos(): Promise<unknown[]> {
+  async fetchVideos() {
     const docs = await safeFetchAllByType("video", {
       orderings: [
         { field: "document.first_publication_date", direction: "desc" },
       ],
     });
     return docs.map((d) => {
-      const doc = d as Record<string, unknown>;
-      const data = (doc.data ?? {}) as Record<string, unknown>;
+      const doc = d as unknown as Record<string, unknown>;
+      const data = (doc.data ?? {}) as unknown as Record<string, unknown>;
       return {
         id: String(doc.id ?? ""),
         title: String(data.title ?? ""),
@@ -259,27 +260,27 @@ const prismicAdapter: CmsAdapter = {
         duration: Number(data.duration ?? 0),
         publishedAt: String(doc.first_publication_date ?? ""),
       };
-    });
+    }) as unknown as Video[];
   },
 
-  async fetchNavigation(): Promise<unknown> {
+  async fetchNavigation() {
     const docs = await safeFetchAllByType("navigation");
-    if (docs.length === 0) return { items: [] };
-    const doc = docs[0] as Record<string, unknown>;
-    const data = (doc.data ?? {}) as Record<string, unknown>;
+    if (docs.length === 0) return { items: [] } as unknown as Navigation;
+    const doc = docs[0] as unknown as Record<string, unknown>;
+    const data = (doc.data ?? {}) as unknown as Record<string, unknown>;
     return {
       items: Array.isArray(data.items) ? data.items : [],
-    };
+    } as unknown as Navigation;
   },
 
-  async fetchSiteConfig(): Promise<unknown> {
+  async fetchSiteConfig() {
     const docs = await safeFetchAllByType("siteConfig");
-    if (docs.length === 0) return {};
-    const doc = docs[0] as Record<string, unknown>;
-    return (doc.data ?? {}) as Record<string, unknown>;
+    if (docs.length === 0) return {} as unknown as SiteConfig;
+    const doc = docs[0] as unknown as Record<string, unknown>;
+    return (doc.data ?? {}) as unknown as SiteConfig;
   },
 
-  async fetchBreakingNews(): Promise<unknown[]> {
+  async fetchBreakingNews() {
     const docs = await safeFetchAllByType("breakingNews", {
       orderings: [
         { field: "document.first_publication_date", direction: "desc" },
@@ -287,8 +288,8 @@ const prismicAdapter: CmsAdapter = {
       pageSize: 5,
     });
     return docs.map((d) => {
-      const doc = d as Record<string, unknown>;
-      const data = (doc.data ?? {}) as Record<string, unknown>;
+      const doc = d as unknown as Record<string, unknown>;
+      const data = (doc.data ?? {}) as unknown as Record<string, unknown>;
       return {
         id: String(doc.id ?? ""),
         headline: String(data.headline ?? ""),
@@ -297,34 +298,34 @@ const prismicAdapter: CmsAdapter = {
         severity: String(data.severity ?? "normal"),
         timestamp: String(doc.first_publication_date ?? ""),
       };
-    });
+    }) as unknown as BreakingNews[];
   },
 
-  async fetchQuiz(): Promise<unknown> {
+  async fetchQuiz() {
     const docs = await safeFetchAllByType("quiz");
     if (docs.length === 0) return null;
-    const doc = docs[0] as Record<string, unknown>;
-    const data = (doc.data ?? {}) as Record<string, unknown>;
+    const doc = docs[0] as unknown as Record<string, unknown>;
+    const data = (doc.data ?? {}) as unknown as Record<string, unknown>;
     const jsonStr = String(data.json ?? "{}");
     try {
-      return JSON.parse(jsonStr);
+      return JSON.parse(jsonStr) as unknown as Quiz;
     } catch {
       return null;
     }
   },
 
-  async fetchStockData(): Promise<unknown> {
+  async fetchStockData() {
     const docs = await safeFetchAllByType("stockData");
     if (docs.length === 0) return null;
-    const doc = docs[0] as Record<string, unknown>;
-    const data = (doc.data ?? {}) as Record<string, unknown>;
+    const doc = docs[0] as unknown as Record<string, unknown>;
+    const data = (doc.data ?? {}) as unknown as Record<string, unknown>;
     const jsonStr = String(data.json ?? "{}");
     try {
-      return JSON.parse(jsonStr);
+      return JSON.parse(jsonStr) as unknown as StockData;
     } catch {
       return null;
     }
   },
 };
 
-export default prismicAdapter;
+export default prismicAdapter as unknown as CmsAdapter;

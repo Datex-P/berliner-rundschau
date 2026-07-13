@@ -4,6 +4,7 @@ import { normalizeImage } from "./image-utils";
 import { parseFieldMap, mapField } from "./field-map";
 import { safeFetch, sanitizeError } from "./http";
 import { defaultNavigation, defaultSiteConfig } from "./defaults";
+import type { Article, Category, Author, NewstickerItem, Video, Navigation, SiteConfig, BreakingNews, Quiz, StockData } from "@/types";
 import {
   fetchNewsticker as mockNewsticker,
   fetchVideos as mockVideos,
@@ -425,20 +426,20 @@ async function getAllNewsItems(): Promise<T3NewsItem[]> {
 
 /* ---------- adapter ---------- */
 
-const typo3Adapter: CmsAdapter = {
+const typo3Adapter = {
   name: "typo3" as const,
 
-  async fetchAllArticles(): Promise<unknown[]> {
+  async fetchAllArticles() {
     const items = await getAllNewsItems();
-    return [...items].map(mapNewsToArticle);
+    return [...items].map(mapNewsToArticle) as unknown as Article[];
   },
 
-  async fetchArticleBySlug(slug: string): Promise<unknown | null> {
+  async fetchArticleBySlug(slug: string) {
     try {
       const page = await fetchPage(`${articlePage}/${slug}`);
       const items = extractNewsItems(page);
       if (items.length > 0) {
-        return mapNewsToArticle(items[0]);
+        return mapNewsToArticle(items[0]) as unknown as Article;
       }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
@@ -448,10 +449,10 @@ const typo3Adapter: CmsAdapter = {
     }
     const all = await getAllNewsItems();
     const match = all.find((item) => item.pathSegment === slug);
-    return match ? mapNewsToArticle(match) : null;
+    return (match ? mapNewsToArticle(match) : null) as unknown as Article | null;
   },
 
-  async fetchArticlesByCategory(categorySlug: string): Promise<unknown[]> {
+  async fetchArticlesByCategory(categorySlug: string) {
     const items = await getAllNewsItems();
     return [...items]
       .filter((item) => {
@@ -460,10 +461,10 @@ const typo3Adapter: CmsAdapter = {
           (cat) => slugify(String(cat.title ?? "")) === categorySlug,
         );
       })
-      .map(mapNewsToArticle);
+      .map(mapNewsToArticle) as unknown as Article[];
   },
 
-  async fetchArticlesByAuthor(authorSlug: string): Promise<unknown[]> {
+  async fetchArticlesByAuthor(authorSlug: string) {
     const items = await getAllNewsItems();
     const fm = fieldMap;
     return [...items]
@@ -471,10 +472,10 @@ const typo3Adapter: CmsAdapter = {
         const name = resolveAuthorName(item, fm);
         return name && slugify(name) === authorSlug;
       })
-      .map(mapNewsToArticle);
+      .map(mapNewsToArticle) as unknown as Article[];
   },
 
-  async searchArticlesByQuery(query: string): Promise<unknown[]> {
+  async searchArticlesByQuery(query: string) {
     const q = query.toLowerCase();
     const items = await getAllNewsItems();
     return [...items]
@@ -483,10 +484,10 @@ const typo3Adapter: CmsAdapter = {
         const teaser = String(item.teaser ?? "").toLowerCase();
         return headline.includes(q) || teaser.includes(q);
       })
-      .map(mapNewsToArticle);
+      .map(mapNewsToArticle) as unknown as Article[];
   },
 
-  async fetchArticleSlugs(): Promise<unknown[]> {
+  async fetchArticleSlugs() {
     const items = await getAllNewsItems();
     return [...items].map((item) => ({
       slug: String(item.pathSegment ?? ""),
@@ -494,7 +495,7 @@ const typo3Adapter: CmsAdapter = {
     }));
   },
 
-  async fetchAllCategories(): Promise<unknown[]> {
+  async fetchAllCategories() {
     const items = await getAllNewsItems();
     const catMap = new Map<number, { cat: T3Category; count: number }>();
     for (const item of items) {
@@ -511,17 +512,17 @@ const typo3Adapter: CmsAdapter = {
     }
     return Array.from(catMap.values()).map((entry) =>
       mapCategory(entry.cat, entry.count),
-    );
+    ) as unknown as Category[];
   },
 
-  async fetchCategoryBySlug(slug: string): Promise<unknown | null> {
-    const categories = (await this.fetchAllCategories()) as Array<{
+  async fetchCategoryBySlug(slug: string) {
+    const categories = (await this.fetchAllCategories()) as unknown as Array<{
       slug: string;
     }>;
-    return categories.find((c) => c.slug === slug) ?? null;
+    return (categories.find((c) => c.slug === slug) ?? null) as unknown as Category | null;
   },
 
-  async fetchAllAuthors(): Promise<unknown[]> {
+  async fetchAllAuthors() {
     const items = await getAllNewsItems();
     const fm = fieldMap;
     const seen = new Set<string>();
@@ -532,15 +533,15 @@ const typo3Adapter: CmsAdapter = {
       seen.add(name);
       authors.push(mapAuthor(name));
     }
-    return authors;
+    return authors as unknown as Author[];
   },
 
-  async fetchAuthorBySlug(slug: string): Promise<unknown | null> {
-    const authors = (await this.fetchAllAuthors()) as Array<{ slug: string }>;
-    return authors.find((a) => a.slug === slug) ?? null;
+  async fetchAuthorBySlug(slug: string) {
+    const authors = (await this.fetchAllAuthors()) as unknown as Array<{ slug: string }>;
+    return (authors.find((a) => a.slug === slug) ?? null) as unknown as Author | null;
   },
 
-  async fetchNavigation(): Promise<unknown> {
+  async fetchNavigation() {
     try {
       const rootPage = contentPages[0] ?? "/";
       const page = await fetchPage(rootPage);
@@ -567,14 +568,14 @@ const typo3Adapter: CmsAdapter = {
         })),
         footerMenu: [],
         socialLinks: [],
-      };
+      } as unknown as Navigation;
     } catch (err) {
       console.warn(`[typo3] fetchNavigation failed: ${sanitizeError(err)}`);
-      return defaultNavigation;
+      return defaultNavigation as unknown as Navigation;
     }
   },
 
-  async fetchSiteConfig(): Promise<unknown> {
+  async fetchSiteConfig() {
     try {
       const rootPage = contentPages[0] ?? "/";
       const page = await fetchPage(rootPage);
@@ -591,32 +592,32 @@ const typo3Adapter: CmsAdapter = {
         tags: [],
         socialLinks: [],
         analytics: { gtmId: "" },
-      };
+      } as unknown as SiteConfig;
     } catch (err) {
       console.warn(`[typo3] fetchSiteConfig failed: ${sanitizeError(err)}`);
-      return defaultSiteConfig;
+      return defaultSiteConfig as unknown as SiteConfig;
     }
   },
 
-  async fetchNewsticker(): Promise<unknown[]> {
+  async fetchNewsticker() {
     return mockNewsticker();
   },
 
-  async fetchVideos(): Promise<unknown[]> {
+  async fetchVideos() {
     return mockVideos();
   },
 
-  async fetchBreakingNews(): Promise<unknown[]> {
+  async fetchBreakingNews() {
     return mockBreakingNews();
   },
 
-  async fetchQuiz(): Promise<unknown> {
+  async fetchQuiz() {
     return mockQuiz();
   },
 
-  async fetchStockData(): Promise<unknown> {
+  async fetchStockData() {
     return mockStockData();
   },
 };
 
-export default typo3Adapter;
+export default typo3Adapter as unknown as CmsAdapter;

@@ -3,6 +3,7 @@ import { sanitizeRichText } from "./sanitize";
 import { normalizeImage } from "./image-utils";
 import { parseFieldMap, mapField } from "./field-map";
 import { safeFetch } from "./http";
+import type { Article, Category, Author, NewstickerItem, Video, Navigation, SiteConfig, BreakingNews, Quiz, StockData } from "@/types";
 
 // --- Config ---
 
@@ -183,10 +184,10 @@ function mapAuthorRecord(record: Record<string, unknown>): unknown {
 
 // --- Adapter implementation ---
 
-const hygraphAdapter: CmsAdapter = {
+const hygraphAdapter = {
   name: "hygraph",
 
-  async fetchAllArticles(): Promise<unknown[]> {
+  async fetchAllArticles() {
     const items: unknown[] = [];
     let skip = 0;
     const first = 100;
@@ -218,10 +219,10 @@ const hygraphAdapter: CmsAdapter = {
       if (skip >= total) break;
     }
 
-    return items;
+    return items as unknown as Article[];
   },
 
-  async fetchArticleBySlug(slug: string): Promise<unknown | null> {
+  async fetchArticleBySlug(slug: string) {
     const q = `
       query ArticleBySlug($slug: String!, $stage: Stage!) {
         ${singleQueryName}(where: { slug: $slug }, stage: $stage) {
@@ -231,10 +232,10 @@ const hygraphAdapter: CmsAdapter = {
     `;
     const result = await gqlQuery<Record<string, unknown>>(q, { slug, stage });
     const record = result[singleQueryName] as Record<string, unknown> | null;
-    return record ? mapRecord(record, fieldMap) : null;
+    return (record ? mapRecord(record, fieldMap) : null) as unknown as Article | null;
   },
 
-  async fetchArticlesByCategory(categorySlug: string): Promise<unknown[]> {
+  async fetchArticlesByCategory(categorySlug: string) {
     const q = `
       query ArticlesByCategory($categorySlug: String!, $stage: Stage!) {
         ${queryName}(
@@ -256,18 +257,18 @@ const hygraphAdapter: CmsAdapter = {
       if (!Array.isArray(batch)) return [];
       return batch.map((r) =>
         mapRecord(r as Record<string, unknown>, fieldMap),
-      );
+      ) as unknown as Article[];
     } catch {
       // Fallback: fetch all and filter client-side
       const all = await this.fetchAllArticles();
-      return (all as Record<string, unknown>[]).filter((a) => {
+      return (all as unknown as Record<string, unknown>[]).filter((a) => {
         const cat = a.category as Record<string, unknown> | undefined;
         return cat?.slug === categorySlug;
-      });
+      }) as unknown as Article[];
     }
   },
 
-  async searchArticlesByQuery(searchQuery: string): Promise<unknown[]> {
+  async searchArticlesByQuery(searchQuery: string) {
     const q = `
       query SearchArticles($searchQuery: String!, $stage: Stage!) {
         ${queryName}(
@@ -289,20 +290,20 @@ const hygraphAdapter: CmsAdapter = {
       if (!Array.isArray(batch)) return [];
       return batch.map((r) =>
         mapRecord(r as Record<string, unknown>, fieldMap),
-      );
+      ) as unknown as Article[];
     } catch {
       // Fallback: fetch all and filter client-side
       const all = await this.fetchAllArticles();
       const lower = searchQuery.toLowerCase();
-      return (all as Record<string, unknown>[]).filter((a) => {
+      return (all as unknown as Record<string, unknown>[]).filter((a) => {
         const headline = String(a.headline ?? "").toLowerCase();
         const teaser = String(a.teaser ?? "").toLowerCase();
         return headline.includes(lower) || teaser.includes(lower);
-      });
+      }) as unknown as Article[];
     }
   },
 
-  async fetchArticleSlugs(): Promise<unknown[]> {
+  async fetchArticleSlugs() {
     const slugs: unknown[] = [];
     let skip = 0;
     const first = 100;
@@ -336,10 +337,10 @@ const hygraphAdapter: CmsAdapter = {
       if (skip >= total) break;
     }
 
-    return slugs;
+    return slugs as unknown as Array<{ slug: string; modified?: string }>;
   },
 
-  async fetchAllCategories(): Promise<unknown[]> {
+  async fetchAllCategories() {
     try {
       const q = `
         query AllCategories($stage: Stage!) {
@@ -351,13 +352,13 @@ const hygraphAdapter: CmsAdapter = {
       const result = await gqlQuery<Record<string, unknown>>(q, { stage });
       const batch = result.categories;
       if (!Array.isArray(batch)) return [];
-      return batch.map((r) => mapCategoryRecord(r as Record<string, unknown>));
+      return batch.map((r) => mapCategoryRecord(r as Record<string, unknown>)) as unknown as Category[];
     } catch {
       return [];
     }
   },
 
-  async fetchCategoryBySlug(slug: string): Promise<unknown | null> {
+  async fetchCategoryBySlug(slug: string) {
     try {
       const q = `
         query CategoryBySlug($slug: String!, $stage: Stage!) {
@@ -371,13 +372,13 @@ const hygraphAdapter: CmsAdapter = {
         stage,
       });
       const record = result.category as Record<string, unknown> | null;
-      return record ? mapCategoryRecord(record) : null;
+      return (record ? mapCategoryRecord(record) : null) as unknown as Category | null;
     } catch {
       return null;
     }
   },
 
-  async fetchAllAuthors(): Promise<unknown[]> {
+  async fetchAllAuthors() {
     try {
       const q = `
         query AllAuthors($stage: Stage!) {
@@ -389,13 +390,13 @@ const hygraphAdapter: CmsAdapter = {
       const result = await gqlQuery<Record<string, unknown>>(q, { stage });
       const batch = result.authors;
       if (!Array.isArray(batch)) return [];
-      return batch.map((r) => mapAuthorRecord(r as Record<string, unknown>));
+      return batch.map((r) => mapAuthorRecord(r as Record<string, unknown>)) as unknown as Author[];
     } catch {
       return [];
     }
   },
 
-  async fetchAuthorBySlug(slug: string): Promise<unknown | null> {
+  async fetchAuthorBySlug(slug: string) {
     try {
       const q = `
         query AuthorBySlug($slug: String!, $stage: Stage!) {
@@ -409,13 +410,13 @@ const hygraphAdapter: CmsAdapter = {
         stage,
       });
       const record = result.author as Record<string, unknown> | null;
-      return record ? mapAuthorRecord(record) : null;
+      return (record ? mapAuthorRecord(record) : null) as unknown as Author | null;
     } catch {
       return null;
     }
   },
 
-  async fetchArticlesByAuthor(authorSlug: string): Promise<unknown[]> {
+  async fetchArticlesByAuthor(authorSlug: string) {
     const q = `
       query ArticlesByAuthor($authorSlug: String!, $stage: Stage!) {
         ${queryName}(
@@ -437,18 +438,18 @@ const hygraphAdapter: CmsAdapter = {
       if (!Array.isArray(batch)) return [];
       return batch.map((r) =>
         mapRecord(r as Record<string, unknown>, fieldMap),
-      );
+      ) as unknown as Article[];
     } catch {
       // Fallback: fetch all and filter client-side
       const all = await this.fetchAllArticles();
-      return (all as Record<string, unknown>[]).filter((a) => {
+      return (all as unknown as Record<string, unknown>[]).filter((a) => {
         const auth = a.author as Record<string, unknown> | undefined;
         return auth?.slug === authorSlug;
-      });
+      }) as unknown as Article[];
     }
   },
 
-  async fetchNewsticker(): Promise<unknown[]> {
+  async fetchNewsticker() {
     try {
       const q = `
         query AllNewstickers($stage: Stage!) {
@@ -473,13 +474,13 @@ const hygraphAdapter: CmsAdapter = {
           publicationDate: String(rec.createdAt ?? ""),
           isPremium: rec.isPremium === true,
         };
-      });
+      }) as unknown as NewstickerItem[];
     } catch {
       return [];
     }
   },
 
-  async fetchVideos(): Promise<unknown[]> {
+  async fetchVideos() {
     try {
       const q = `
         query AllVideos($stage: Stage!) {
@@ -511,13 +512,13 @@ const hygraphAdapter: CmsAdapter = {
           category: String(rec.category ?? ""),
           publishedAt: String(rec.createdAt ?? ""),
         };
-      });
+      }) as unknown as Video[];
     } catch {
       return [];
     }
   },
 
-  async fetchNavigation(): Promise<unknown> {
+  async fetchNavigation() {
     try {
       const q = `
         query Navigation($stage: Stage!) {
@@ -530,7 +531,7 @@ const hygraphAdapter: CmsAdapter = {
       `;
       const result = await gqlQuery<Record<string, unknown>>(q, { stage });
       const nav = result.navigation as Record<string, unknown> | null;
-      if (!nav) return { primaryMenu: [], footerMenu: [], socialLinks: [] };
+      if (!nav) return { primaryMenu: [], footerMenu: [], socialLinks: [] } as unknown as Navigation;
       return {
         primaryMenu: nav.primaryMenuJson
           ? typeof nav.primaryMenuJson === "string"
@@ -547,13 +548,13 @@ const hygraphAdapter: CmsAdapter = {
             ? JSON.parse(nav.socialLinksJson)
             : nav.socialLinksJson
           : [],
-      };
+      } as unknown as Navigation;
     } catch {
-      return { primaryMenu: [], footerMenu: [], socialLinks: [] };
+      return { primaryMenu: [], footerMenu: [], socialLinks: [] } as unknown as Navigation;
     }
   },
 
-  async fetchSiteConfig(): Promise<unknown> {
+  async fetchSiteConfig() {
     try {
       const q = `
         query SiteConfig($stage: Stage!) {
@@ -575,7 +576,7 @@ const hygraphAdapter: CmsAdapter = {
           tags: [],
           socialLinks: [],
           analytics: { gtmId: "" },
-        };
+        } as unknown as SiteConfig;
       }
       return {
         title: String(cfg.title ?? ""),
@@ -589,7 +590,7 @@ const hygraphAdapter: CmsAdapter = {
             : cfg.socialLinksJson
           : [],
         analytics: { gtmId: String(cfg.analyticsGtmId ?? "") },
-      };
+      } as unknown as SiteConfig;
     } catch {
       return {
         title: "",
@@ -599,11 +600,11 @@ const hygraphAdapter: CmsAdapter = {
         tags: [],
         socialLinks: [],
         analytics: { gtmId: "" },
-      };
+      } as unknown as SiteConfig;
     }
   },
 
-  async fetchBreakingNews(): Promise<unknown[]> {
+  async fetchBreakingNews() {
     try {
       const q = `
         query AllBreakingNews($stage: Stage!) {
@@ -625,13 +626,13 @@ const hygraphAdapter: CmsAdapter = {
           publishedAt: String(rec.createdAt ?? ""),
           expiresAt: rec.expiresAt ? String(rec.expiresAt) : undefined,
         };
-      });
+      }) as unknown as BreakingNews[];
     } catch {
       return [];
     }
   },
 
-  async fetchQuiz(): Promise<unknown> {
+  async fetchQuiz() {
     try {
       const q = `
         query Quiz($stage: Stage!) {
@@ -646,7 +647,7 @@ const hygraphAdapter: CmsAdapter = {
         return {
           dailyQuiz: { date: "", title: "", questions: [] },
           streakRewards: [],
-        };
+        } as unknown as Quiz;
       return {
         dailyQuiz: {
           date: String(quiz.date ?? ""),
@@ -662,16 +663,16 @@ const hygraphAdapter: CmsAdapter = {
             ? JSON.parse(quiz.streakRewardsJson)
             : quiz.streakRewardsJson
           : [],
-      };
+      } as unknown as Quiz;
     } catch {
       return {
         dailyQuiz: { date: "", title: "", questions: [] },
         streakRewards: [],
-      };
+      } as unknown as Quiz;
     }
   },
 
-  async fetchStockData(): Promise<unknown> {
+  async fetchStockData() {
     try {
       const q = `
         query StockData($stage: Stage!) {
@@ -682,7 +683,7 @@ const hygraphAdapter: CmsAdapter = {
       `;
       const result = await gqlQuery<Record<string, unknown>>(q, { stage });
       const stock = result.stockData as Record<string, unknown> | null;
-      if (!stock) return { indices: [], watchlist: [], chartData: {} };
+      if (!stock) return { indices: [], watchlist: [], chartData: {} } as unknown as StockData;
       return {
         indices: stock.indicesJson
           ? typeof stock.indicesJson === "string"
@@ -699,11 +700,11 @@ const hygraphAdapter: CmsAdapter = {
             ? JSON.parse(stock.chartDataJson)
             : stock.chartDataJson
           : {},
-      };
+      } as unknown as StockData;
     } catch {
-      return { indices: [], watchlist: [], chartData: {} };
+      return { indices: [], watchlist: [], chartData: {} } as unknown as StockData;
     }
   },
 };
 
-export default hygraphAdapter;
+export default hygraphAdapter as unknown as CmsAdapter;

@@ -4,6 +4,7 @@ import type { CmsAdapter } from "./types";
 import { sanitizeRichText } from "./sanitize";
 import { normalizeImage } from "./image-utils";
 import { parseFieldMap, mapField } from "./field-map";
+import type { Article, Category, Author, NewstickerItem, Video, Navigation, SiteConfig, BreakingNews, Quiz, StockData } from "@/types";
 
 // --- Config ---
 
@@ -30,7 +31,8 @@ function renderStructuredText(field: unknown): string {
   try {
     const html = render(obj.value as Parameters<typeof render>[0]);
     return sanitizeRichText(html ?? "");
-  } catch {
+  } catch (error) {
+    console.error('[DatoCMS] Structured-Text-Rendering fehlgeschlagen:', error instanceof Error ? error.message : error)
     return "";
   }
 }
@@ -85,13 +87,15 @@ function mapArticleRecord(record: Record<string, unknown>): unknown {
       : { id: "", name: "", slug: "", avatar: "" },
     tags: (() => {
       const t = record[mapField(fm, "tags")];
-      if (Array.isArray(t)) return t as string[];
+      if (Array.isArray(t)) return t.filter((v): v is string => typeof v === 'string');
       if (
         t &&
         typeof t === "object" &&
         Array.isArray((t as Record<string, unknown>).list)
-      )
-        return (t as Record<string, unknown>).list as string[];
+      ) {
+        const list = (t as Record<string, unknown>).list;
+        return Array.isArray(list) ? list.filter((v): v is string => typeof v === 'string') : [];
+      }
       return [];
     })(),
     readingTimeMinutes: Number(record[mapField(fm, "readingTimeMinutes")] ?? 0),
@@ -175,10 +179,10 @@ function allModelMeta(model: string): string {
 
 // --- Adapter implementation ---
 
-const adapter: CmsAdapter = {
+const adapter = {
   name: "datocms",
 
-  async fetchAllArticles(): Promise<unknown[]> {
+  async fetchAllArticles() {
     const allQuery = allModelQuery(articleModel);
     const metaQuery = allModelMeta(articleModel);
     const items: unknown[] = [];
@@ -206,10 +210,10 @@ const adapter: CmsAdapter = {
       if (skip >= total) break;
     }
 
-    return items;
+    return items as unknown as Article[];
   },
 
-  async fetchArticleBySlug(slug: string): Promise<unknown | null> {
+  async fetchArticleBySlug(slug: string) {
     const q = `
       query ArticleBySlug($slug: String!) {
         ${articleModel}(filter: { slug: { eq: $slug } }) {
@@ -219,20 +223,20 @@ const adapter: CmsAdapter = {
     `;
     const result = await query<Record<string, unknown>>(q, { slug });
     const record = result[articleModel] as Record<string, unknown> | null;
-    return record ? mapArticleRecord(record) : null;
+    return (record ? mapArticleRecord(record) : null) as unknown as Article | null;
   },
 
-  async fetchArticlesByCategory(categorySlug: string): Promise<unknown[]> {
+  async fetchArticlesByCategory(categorySlug: string) {
     // DatoCMS filters on linked records require the record ID, not slug.
     // Fetch all articles and filter client-side by category slug.
     const all = await this.fetchAllArticles();
-    return (all as Record<string, unknown>[]).filter((a) => {
+    return (all as unknown as Record<string, unknown>[]).filter((a) => {
       const cat = a.category as Record<string, unknown> | undefined;
       return cat?.slug === categorySlug;
-    });
+    }) as unknown as Article[];
   },
 
-  async searchArticlesByQuery(searchQuery: string): Promise<unknown[]> {
+  async searchArticlesByQuery(searchQuery: string) {
     const allQuery = allModelQuery(articleModel);
     const q = `
       query SearchArticles($searchQuery: String!, $first: IntType!) {
@@ -252,20 +256,20 @@ const adapter: CmsAdapter = {
       });
       const batch = result[allQuery];
       if (!Array.isArray(batch)) return [];
-      return batch.map((r) => mapArticleRecord(r as Record<string, unknown>));
-    } catch {
-      // Fallback: fetch all and filter client-side
+      return batch.map((r) => mapArticleRecord(r as Record<string, unknown>)) as unknown as Article[];
+    } catch (error) {
+      console.error('[DatoCMS] Artikel-Suche fehlgeschlagen, Fallback auf Client-Filter:', error instanceof Error ? error.message : error)
       const all = await this.fetchAllArticles();
       const lower = searchQuery.toLowerCase();
-      return (all as Record<string, unknown>[]).filter((a) => {
+      return (all as unknown as Record<string, unknown>[]).filter((a) => {
         const headline = String(a.headline ?? "").toLowerCase();
         const teaser = String(a.teaser ?? "").toLowerCase();
         return headline.includes(lower) || teaser.includes(lower);
-      });
+      }) as unknown as Article[];
     }
   },
 
-  async fetchArticleSlugs(): Promise<unknown[]> {
+  async fetchArticleSlugs() {
     const allQuery = allModelQuery(articleModel);
     const metaQuery = allModelMeta(articleModel);
     const slugs: unknown[] = [];
@@ -295,10 +299,10 @@ const adapter: CmsAdapter = {
       if (skip >= total) break;
     }
 
-    return slugs;
+    return slugs as unknown as Array<{ slug: string; modified?: string }>;
   },
 
-  async fetchAllCategories(): Promise<unknown[]> {
+  async fetchAllCategories() {
     try {
       const q = `
         query AllCategories {
@@ -310,13 +314,14 @@ const adapter: CmsAdapter = {
       const result = await query<Record<string, unknown>>(q);
       const batch = result.allCategories;
       if (!Array.isArray(batch)) return [];
-      return batch.map((r) => mapCategoryRecord(r as Record<string, unknown>));
-    } catch {
+      return batch.map((r) => mapCategoryRecord(r as Record<string, unknown>)) as unknown as Category[];
+    } catch (error) {
+      console.error('[DatoCMS] Kategorien-Fetch fehlgeschlagen:', error instanceof Error ? error.message : error)
       return [];
     }
   },
 
-  async fetchCategoryBySlug(slug: string): Promise<unknown | null> {
+  async fetchCategoryBySlug(slug: string) {
     try {
       const q = `
         query CategoryBySlug($slug: String!) {
@@ -327,13 +332,14 @@ const adapter: CmsAdapter = {
       `;
       const result = await query<Record<string, unknown>>(q, { slug });
       const record = result.category as Record<string, unknown> | null;
-      return record ? mapCategoryRecord(record) : null;
-    } catch {
+      return (record ? mapCategoryRecord(record) : null) as unknown as Category | null;
+    } catch (error) {
+      console.error(`[DatoCMS] Kategorie-Fetch "${slug}" fehlgeschlagen:`, error instanceof Error ? error.message : error)
       return null;
     }
   },
 
-  async fetchAllAuthors(): Promise<unknown[]> {
+  async fetchAllAuthors() {
     try {
       const q = `
         query AllAuthors {
@@ -345,13 +351,14 @@ const adapter: CmsAdapter = {
       const result = await query<Record<string, unknown>>(q);
       const batch = result.allAuthors;
       if (!Array.isArray(batch)) return [];
-      return batch.map((r) => mapAuthorRecord(r as Record<string, unknown>));
-    } catch {
+      return batch.map((r) => mapAuthorRecord(r as Record<string, unknown>)) as unknown as Author[];
+    } catch (error) {
+      console.error('[DatoCMS] Autoren-Fetch fehlgeschlagen:', error instanceof Error ? error.message : error)
       return [];
     }
   },
 
-  async fetchAuthorBySlug(slug: string): Promise<unknown | null> {
+  async fetchAuthorBySlug(slug: string) {
     try {
       const q = `
         query AuthorBySlug($slug: String!) {
@@ -362,21 +369,22 @@ const adapter: CmsAdapter = {
       `;
       const result = await query<Record<string, unknown>>(q, { slug });
       const record = result.author as Record<string, unknown> | null;
-      return record ? mapAuthorRecord(record) : null;
-    } catch {
+      return (record ? mapAuthorRecord(record) : null) as unknown as Author | null;
+    } catch (error) {
+      console.error(`[DatoCMS] Autor-Fetch "${slug}" fehlgeschlagen:`, error instanceof Error ? error.message : error)
       return null;
     }
   },
 
-  async fetchArticlesByAuthor(authorSlug: string): Promise<unknown[]> {
+  async fetchArticlesByAuthor(authorSlug: string) {
     const all = await this.fetchAllArticles();
-    return (all as Record<string, unknown>[]).filter((a) => {
+    return (all as unknown as Record<string, unknown>[]).filter((a) => {
       const auth = a.author as Record<string, unknown> | undefined;
       return auth?.slug === authorSlug;
-    });
+    }) as unknown as Article[];
   },
 
-  async fetchNewsticker(): Promise<unknown[]> {
+  async fetchNewsticker() {
     try {
       const q = `
         query AllNewstickers {
@@ -401,13 +409,14 @@ const adapter: CmsAdapter = {
           publicationDate: String(rec._createdAt ?? ""),
           isPremium: rec.isPremium === true,
         };
-      });
-    } catch {
+      }) as unknown as NewstickerItem[];
+    } catch (error) {
+      console.error('[DatoCMS] Newsticker-Fetch fehlgeschlagen:', error instanceof Error ? error.message : error)
       return [];
     }
   },
 
-  async fetchVideos(): Promise<unknown[]> {
+  async fetchVideos() {
     try {
       const q = `
         query AllVideos {
@@ -439,13 +448,14 @@ const adapter: CmsAdapter = {
           category: String(rec.category ?? ""),
           publishedAt: String(rec._createdAt ?? ""),
         };
-      });
-    } catch {
+      }) as unknown as Video[];
+    } catch (error) {
+      console.error('[DatoCMS] Video-Fetch fehlgeschlagen:', error instanceof Error ? error.message : error)
       return [];
     }
   },
 
-  async fetchNavigation(): Promise<unknown> {
+  async fetchNavigation() {
     try {
       const q = `
         query Navigation {
@@ -458,7 +468,7 @@ const adapter: CmsAdapter = {
       `;
       const result = await query<Record<string, unknown>>(q);
       const nav = result.navigation as Record<string, unknown> | null;
-      if (!nav) return { primaryMenu: [], footerMenu: [], socialLinks: [] };
+      if (!nav) return { primaryMenu: [], footerMenu: [], socialLinks: [] } as unknown as Navigation;
       const wrapMenuItems = (items: unknown[]): unknown[] =>
         items.map((item) => {
           const i = item as Record<string, unknown>;
@@ -482,13 +492,14 @@ const adapter: CmsAdapter = {
         socialLinks: nav.socialLinksJson
           ? JSON.parse(String(nav.socialLinksJson))
           : [],
-      };
-    } catch {
-      return { primaryMenu: [], footerMenu: [], socialLinks: [] };
+      } as unknown as Navigation;
+    } catch (error) {
+      console.error('[DatoCMS] Navigation-Fetch fehlgeschlagen:', error instanceof Error ? error.message : error)
+      return { primaryMenu: [], footerMenu: [], socialLinks: [] } as unknown as Navigation;
     }
   },
 
-  async fetchSiteConfig(): Promise<unknown> {
+  async fetchSiteConfig() {
     try {
       const q = `
         query SiteConfig {
@@ -510,7 +521,7 @@ const adapter: CmsAdapter = {
           tags: [],
           socialLinks: [],
           analytics: { gtmId: "" },
-        };
+        } as unknown as SiteConfig;
       }
       return {
         title: String(cfg.title ?? ""),
@@ -519,21 +530,24 @@ const adapter: CmsAdapter = {
         language: String(cfg.language ?? "de"),
         tags: (() => {
           const t = cfg.tags;
-          if (Array.isArray(t)) return t as string[];
+          if (Array.isArray(t)) return t.filter((v): v is string => typeof v === 'string');
           if (
             t &&
             typeof t === "object" &&
             Array.isArray((t as Record<string, unknown>).list)
-          )
-            return (t as Record<string, unknown>).list as string[];
+          ) {
+            const list = (t as Record<string, unknown>).list;
+            return Array.isArray(list) ? list.filter((v): v is string => typeof v === 'string') : [];
+          }
           return [];
         })(),
         socialLinks: cfg.socialLinksJson
           ? JSON.parse(String(cfg.socialLinksJson))
           : [],
         analytics: { gtmId: String(cfg.analyticsGtmId ?? "") },
-      };
-    } catch {
+      } as unknown as SiteConfig;
+    } catch (error) {
+      console.error('[DatoCMS] SiteConfig-Fetch fehlgeschlagen:', error instanceof Error ? error.message : error)
       return {
         title: "",
         description: "",
@@ -542,11 +556,11 @@ const adapter: CmsAdapter = {
         tags: [],
         socialLinks: [],
         analytics: { gtmId: "" },
-      };
+      } as unknown as SiteConfig;
     }
   },
 
-  async fetchBreakingNews(): Promise<unknown[]> {
+  async fetchBreakingNews() {
     try {
       const q = `
         query AllBreakingNews {
@@ -568,13 +582,14 @@ const adapter: CmsAdapter = {
           publishedAt: String(rec._createdAt ?? ""),
           expiresAt: rec.expiresAt ? String(rec.expiresAt) : undefined,
         };
-      });
-    } catch {
+      }) as unknown as BreakingNews[];
+    } catch (error) {
+      console.error('[DatoCMS] BreakingNews-Fetch fehlgeschlagen:', error instanceof Error ? error.message : error)
       return [];
     }
   },
 
-  async fetchQuiz(): Promise<unknown> {
+  async fetchQuiz() {
     try {
       const q = `
         query Quiz {
@@ -589,7 +604,7 @@ const adapter: CmsAdapter = {
         return {
           dailyQuiz: { date: "", title: "", questions: [] },
           streakRewards: [],
-        };
+        } as unknown as Quiz;
       return {
         dailyQuiz: {
           date: String(quiz.date ?? ""),
@@ -601,16 +616,17 @@ const adapter: CmsAdapter = {
         streakRewards: quiz.streakRewardsJson
           ? JSON.parse(String(quiz.streakRewardsJson))
           : [],
-      };
-    } catch {
+      } as unknown as Quiz;
+    } catch (error) {
+      console.error('[DatoCMS] Quiz-Fetch fehlgeschlagen:', error instanceof Error ? error.message : error)
       return {
         dailyQuiz: { date: "", title: "", questions: [] },
         streakRewards: [],
-      };
+      } as unknown as Quiz;
     }
   },
 
-  async fetchStockData(): Promise<unknown> {
+  async fetchStockData() {
     try {
       const q = `
         query StockData {
@@ -621,7 +637,7 @@ const adapter: CmsAdapter = {
       `;
       const result = await query<Record<string, unknown>>(q);
       const stock = result.stock as Record<string, unknown> | null;
-      if (!stock) return { indices: [], watchlist: [], chartData: {} };
+      if (!stock) return { indices: [], watchlist: [], chartData: {} } as unknown as StockData;
       return {
         indices: stock.indicesJson ? JSON.parse(String(stock.indicesJson)) : [],
         watchlist: stock.watchlistJson
@@ -630,11 +646,12 @@ const adapter: CmsAdapter = {
         chartData: stock.chartDataJson
           ? JSON.parse(String(stock.chartDataJson))
           : {},
-      };
-    } catch {
-      return { indices: [], watchlist: [], chartData: {} };
+      } as unknown as StockData;
+    } catch (error) {
+      console.error('[DatoCMS] StockData-Fetch fehlgeschlagen:', error instanceof Error ? error.message : error)
+      return { indices: [], watchlist: [], chartData: {} } as unknown as StockData;
     }
   },
 };
 
-export default adapter;
+export default adapter as unknown as CmsAdapter;

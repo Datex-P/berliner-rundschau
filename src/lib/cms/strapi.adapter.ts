@@ -3,6 +3,7 @@ import { sanitizeRichText } from "./sanitize";
 import { normalizeImage } from "./image-utils";
 import { parseFieldMap, mapField } from "./field-map";
 import { safeFetch, sanitizeError } from "./http";
+import type { Article, Category, Author, NewstickerItem, Video, Navigation, SiteConfig, BreakingNews, Quiz, StockData } from "@/types";
 
 /* ---------- config ---------- */
 
@@ -187,7 +188,7 @@ async function fetchAllPaginated(
   col: string,
   extraParams = "",
   populate = "*",
-): Promise<unknown[]> {
+) {
   const items: unknown[] = [];
   let page = 1;
   let totalPages = 1;
@@ -214,7 +215,7 @@ async function safeFetchAll(
   col: string,
   extraParams = "",
   populate = "*",
-): Promise<unknown[]> {
+) {
   try {
     return await fetchAllPaginated(col, extraParams, populate);
   } catch (err: unknown) {
@@ -227,7 +228,7 @@ async function safeFetchAll(
 async function safeFetchFirst(
   col: string,
   extraParams = "",
-): Promise<unknown | null> {
+) {
   try {
     const extra = extraParams ? `&${extraParams}` : "";
     const res = await strapiFetch<StrapiListResponse>(
@@ -393,51 +394,51 @@ function mapAuthor(item: Record<string, unknown>): unknown {
 
 /* ---------- adapter ---------- */
 
-const strapiAdapter: CmsAdapter = {
+const strapiAdapter = {
   name: "strapi",
 
-  async fetchAllArticles(): Promise<unknown[]> {
+  async fetchAllArticles() {
     const items = await fetchAllPaginated(
       collection,
       "sort=publishedAt:desc",
       "cover,category,author,author.avatar",
     );
-    return items.map((i) => mapItem(i as Record<string, unknown>));
+    return items.map((i) => mapItem(i as Record<string, unknown>)) as unknown as Article[];
   },
 
-  async fetchArticleBySlug(slug: string): Promise<unknown | null> {
+  async fetchArticleBySlug(slug: string) {
     try {
       const res = await strapiFetch<StrapiListResponse>(
         `/${collection}?filters[${mf("slug")}][$eq]=${encodeURIComponent(slug)}&populate=cover,category,author,author.avatar&pagination[pageSize]=1`,
       );
       if (!Array.isArray(res.data) || res.data.length === 0) return null;
       const item = unwrapItem(res.data[0] as Record<string, unknown>);
-      return mapItem(item);
+      return mapItem(item) as unknown as Article;
     } catch (err: unknown) {
       console.warn(`[strapi] fetchArticleBySlug failed: ${sanitizeError(err)}`);
       return null;
     }
   },
 
-  async fetchArticlesByCategory(categorySlug: string): Promise<unknown[]> {
+  async fetchArticlesByCategory(categorySlug: string) {
     const items = await safeFetchAll(
       collection,
       `filters[${mf("category")}][slug][$eq]=${encodeURIComponent(categorySlug)}&sort=publishedAt:desc`,
       "cover,category,author,author.avatar",
     );
-    return items.map((i) => mapItem(i as Record<string, unknown>));
+    return items.map((i) => mapItem(i as Record<string, unknown>)) as unknown as Article[];
   },
 
-  async searchArticlesByQuery(query: string): Promise<unknown[]> {
+  async searchArticlesByQuery(query: string) {
     const items = await safeFetchAll(
       collection,
       `filters[${mf("headline")}][$containsi]=${encodeURIComponent(query)}&sort=publishedAt:desc`,
       "cover,category,author,author.avatar",
     );
-    return items.map((i) => mapItem(i as Record<string, unknown>));
+    return items.map((i) => mapItem(i as Record<string, unknown>)) as unknown as Article[];
   },
 
-  async fetchArticleSlugs(): Promise<unknown[]> {
+  async fetchArticleSlugs() {
     const items = await fetchAllPaginated(
       collection,
       `fields[0]=${mf("slug")}&fields[1]=updatedAt`,
@@ -448,47 +449,47 @@ const strapiAdapter: CmsAdapter = {
         slug: String(item[mf("slug")] ?? ""),
         updatedAt: String(item.updatedAt ?? ""),
       };
-    });
+    }) as unknown as Array<{ slug: string; modified?: string }>;
   },
 
-  async fetchAllCategories(): Promise<unknown[]> {
+  async fetchAllCategories() {
     const items = await safeFetchAll("categories", "sort=name:asc");
-    return items.map((i) => mapCategory(i as Record<string, unknown>));
+    return items.map((i) => mapCategory(i as Record<string, unknown>)) as unknown as Category[];
   },
 
-  async fetchCategoryBySlug(slug: string): Promise<unknown | null> {
+  async fetchCategoryBySlug(slug: string) {
     const item = await safeFetchFirst(
       "categories",
       `filters[slug][$eq]=${encodeURIComponent(slug)}`,
     );
     if (!item) return null;
-    return mapCategory(item as Record<string, unknown>);
+    return mapCategory(item as Record<string, unknown>) as unknown as Category;
   },
 
-  async fetchAllAuthors(): Promise<unknown[]> {
+  async fetchAllAuthors() {
     const items = await safeFetchAll("authors", "sort=name:asc");
-    return items.map((i) => mapAuthor(i as Record<string, unknown>));
+    return items.map((i) => mapAuthor(i as Record<string, unknown>)) as unknown as Author[];
   },
 
-  async fetchAuthorBySlug(slug: string): Promise<unknown | null> {
+  async fetchAuthorBySlug(slug: string) {
     const item = await safeFetchFirst(
       "authors",
       `filters[slug][$eq]=${encodeURIComponent(slug)}`,
     );
     if (!item) return null;
-    return mapAuthor(item as Record<string, unknown>);
+    return mapAuthor(item as Record<string, unknown>) as unknown as Author;
   },
 
-  async fetchArticlesByAuthor(authorSlug: string): Promise<unknown[]> {
+  async fetchArticlesByAuthor(authorSlug: string) {
     const items = await safeFetchAll(
       collection,
       `filters[${mf("author")}][slug][$eq]=${encodeURIComponent(authorSlug)}&sort=publishedAt:desc`,
       "cover,category,author,author.avatar",
     );
-    return items.map((i) => mapItem(i as Record<string, unknown>));
+    return items.map((i) => mapItem(i as Record<string, unknown>)) as unknown as Article[];
   },
 
-  async fetchNewsticker(): Promise<unknown[]> {
+  async fetchNewsticker() {
     const items = await safeFetchAll(
       "newsticker-items",
       "sort=createdAt:desc&pagination[pageSize]=20",
@@ -502,10 +503,10 @@ const strapiAdapter: CmsAdapter = {
         timestamp: String(item.publishedAt ?? item.createdAt ?? ""),
         url: String(item.url ?? ""),
       };
-    });
+    }) as unknown as NewstickerItem[];
   },
 
-  async fetchVideos(): Promise<unknown[]> {
+  async fetchVideos() {
     const items = await safeFetchAll("videos", "sort=createdAt:desc");
     return items.map((i) => {
       const item = i as Record<string, unknown>;
@@ -517,25 +518,25 @@ const strapiAdapter: CmsAdapter = {
         duration: Number(item.duration ?? 0),
         publishedAt: String(item.publishedAt ?? item.createdAt ?? ""),
       };
-    });
+    }) as unknown as Video[];
   },
 
-  async fetchNavigation(): Promise<unknown> {
+  async fetchNavigation() {
     const item = await safeFetchFirst("navigations");
-    if (!item) return { items: [] };
+    if (!item) return { items: [] } as unknown as Navigation;
     const nav = item as Record<string, unknown>;
     return {
       items: Array.isArray(nav.items) ? nav.items : [],
-    };
+    } as unknown as Navigation;
   },
 
-  async fetchSiteConfig(): Promise<unknown> {
+  async fetchSiteConfig() {
     const item = await safeFetchFirst("site-configs");
-    if (!item) return {};
-    return item;
+    if (!item) return {} as unknown as SiteConfig;
+    return item as unknown as SiteConfig;
   },
 
-  async fetchBreakingNews(): Promise<unknown[]> {
+  async fetchBreakingNews() {
     const items = await safeFetchAll(
       "breaking-news",
       "sort=createdAt:desc&pagination[pageSize]=5",
@@ -550,29 +551,29 @@ const strapiAdapter: CmsAdapter = {
         severity: String(item.severity ?? "normal"),
         timestamp: String(item.publishedAt ?? item.createdAt ?? ""),
       };
-    });
+    }) as unknown as BreakingNews[];
   },
 
-  async fetchQuiz(): Promise<unknown> {
+  async fetchQuiz() {
     const item = await safeFetchFirst("quizzes", "sort=createdAt:desc");
-    if (!item) return null;
+    if (!item) return null as unknown as Quiz;
     const quiz = item as Record<string, unknown>;
     return {
       id: String(quiz.id ?? ""),
       title: String(quiz.title ?? ""),
       questions: Array.isArray(quiz.questions) ? quiz.questions : [],
-    };
+    } as unknown as Quiz;
   },
 
-  async fetchStockData(): Promise<unknown> {
+  async fetchStockData() {
     const item = await safeFetchFirst("stock-data", "sort=updatedAt:desc");
-    if (!item) return null;
+    if (!item) return null as unknown as StockData;
     const stock = item as Record<string, unknown>;
     return {
       stocks: Array.isArray(stock.stocks) ? stock.stocks : [],
       updatedAt: String(stock.updatedAt ?? ""),
-    };
+    } as unknown as StockData;
   },
 };
 
-export default strapiAdapter;
+export default strapiAdapter as unknown as CmsAdapter;

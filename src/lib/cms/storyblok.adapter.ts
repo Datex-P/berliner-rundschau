@@ -4,6 +4,7 @@ import type { CmsAdapter } from "./types";
 import { sanitizeRichText } from "./sanitize";
 import { normalizeImage } from "./image-utils";
 import { parseFieldMap, mapField } from "./field-map";
+import type { Article, Category, Author, NewstickerItem, Video, Navigation, SiteConfig, BreakingNews, Quiz, StockData } from "@/types";
 
 /* ---------- client setup ---------- */
 
@@ -33,7 +34,7 @@ function mf(name: string): string {
 async function fetchAllStories(
   contentType: string,
   extraParams?: Record<string, unknown>,
-): Promise<unknown[]> {
+) {
   const items: unknown[] = [];
   const allRels: unknown[] = [];
   let page = 1;
@@ -62,10 +63,11 @@ async function fetchAllStories(
 async function safeFetchAll(
   contentType: string,
   extraParams?: Record<string, unknown>,
-): Promise<unknown[]> {
+) {
   try {
     return await fetchAllStories(contentType, extraParams);
-  } catch {
+  } catch (error) {
+    console.error(`[Storyblok] Fetch aller "${contentType}"-Stories fehlgeschlagen:`, error instanceof Error ? error.message : error)
     return [];
   }
 }
@@ -74,7 +76,7 @@ async function safeFetchAll(
 async function safeFetchStory(
   slug: string,
   extraParams?: Record<string, unknown>,
-): Promise<unknown | null> {
+) {
   try {
     const res = await client.get(`cdn/stories/${slug}`, {
       version,
@@ -85,7 +87,8 @@ async function safeFetchStory(
       resolveRelations([story], res.data.rels);
     }
     return story;
-  } catch {
+  } catch (error) {
+    console.error(`[Storyblok] Fetch Story "${slug}" fehlgeschlagen:`, error instanceof Error ? error.message : error)
     return null;
   }
 }
@@ -94,7 +97,7 @@ async function safeFetchStory(
 async function safeFetchFirst(
   contentType: string,
   extraParams?: Record<string, unknown>,
-): Promise<unknown | null> {
+) {
   const items = await safeFetchAll(contentType, {
     ...extraParams,
     per_page: 1,
@@ -267,32 +270,32 @@ function mapAuthor(story: unknown): unknown {
 
 /* ---------- adapter ---------- */
 
-const storyblokAdapter: CmsAdapter = {
+const storyblokAdapter = {
   name: "storyblok",
 
-  async fetchAllArticles(): Promise<unknown[]> {
+  async fetchAllArticles() {
     const stories = await fetchAllStories(articleType, {
       resolve_relations: articleRelations,
     });
-    return stories.map(mapStory);
+    return stories.map(mapStory) as unknown as Article[];
   },
 
-  async fetchArticleBySlug(slug: string): Promise<unknown | null> {
+  async fetchArticleBySlug(slug: string) {
     /* Try direct slug fetch first, fall back to content_type filter */
     const story = await safeFetchStory(slug, {
       resolve_relations: articleRelations,
     });
-    if (story) return mapStory(story);
+    if (story) return mapStory(story) as unknown as Article;
 
     const items = await safeFetchAll(articleType, {
       "filter_query[slug][is]": slug,
       per_page: 1,
       resolve_relations: articleRelations,
     });
-    return items.length > 0 ? mapStory(items[0]) : null;
+    return (items.length > 0 ? mapStory(items[0]) : null) as unknown as Article | null;
   },
 
-  async fetchArticlesByCategory(categorySlug: string): Promise<unknown[]> {
+  async fetchArticlesByCategory(categorySlug: string) {
     const allCats = await safeFetchAll("category");
     const cat = allCats.find(
       (c) => (c as Record<string, unknown>).slug === categorySlug,
@@ -304,58 +307,58 @@ const storyblokAdapter: CmsAdapter = {
       "filter_query[category][in]": catUuid,
       resolve_relations: articleRelations,
     });
-    return items.map(mapStory);
+    return items.map(mapStory) as unknown as Article[];
   },
 
-  async searchArticlesByQuery(query: string): Promise<unknown[]> {
+  async searchArticlesByQuery(query: string) {
     const items = await safeFetchAll(articleType, {
       search_term: query,
       resolve_relations: articleRelations,
     });
-    return items.map(mapStory);
+    return items.map(mapStory) as unknown as Article[];
   },
 
-  async fetchArticleSlugs(): Promise<unknown[]> {
+  async fetchArticleSlugs() {
     const stories = await fetchAllStories(articleType);
     return stories.map((story) => ({
       slug: String(storyField(story, "slug") ?? ""),
       updatedAt: String(storyField(story, "updated_at") ?? ""),
-    }));
+    })) as unknown as Array<{ slug: string; modified?: string }>;
   },
 
-  async fetchAllCategories(): Promise<unknown[]> {
+  async fetchAllCategories() {
     const items = await safeFetchAll("category");
-    return items.map(mapCategory);
+    return items.map(mapCategory) as unknown as Category[];
   },
 
-  async fetchCategoryBySlug(slug: string): Promise<unknown | null> {
+  async fetchCategoryBySlug(slug: string) {
     const story = await safeFetchStory(slug);
-    if (story) return mapCategory(story);
+    if (story) return mapCategory(story) as unknown as Category;
 
     const items = await safeFetchAll("category", {
       "filter_query[slug][is]": slug,
       per_page: 1,
     });
-    return items.length > 0 ? mapCategory(items[0]) : null;
+    return (items.length > 0 ? mapCategory(items[0]) : null) as unknown as Category | null;
   },
 
-  async fetchAllAuthors(): Promise<unknown[]> {
+  async fetchAllAuthors() {
     const items = await safeFetchAll("author");
-    return items.map(mapAuthor);
+    return items.map(mapAuthor) as unknown as Author[];
   },
 
-  async fetchAuthorBySlug(slug: string): Promise<unknown | null> {
+  async fetchAuthorBySlug(slug: string) {
     const story = await safeFetchStory(slug);
-    if (story) return mapAuthor(story);
+    if (story) return mapAuthor(story) as unknown as Author;
 
     const items = await safeFetchAll("author", {
       "filter_query[slug][is]": slug,
       per_page: 1,
     });
-    return items.length > 0 ? mapAuthor(items[0]) : null;
+    return (items.length > 0 ? mapAuthor(items[0]) : null) as unknown as Author | null;
   },
 
-  async fetchArticlesByAuthor(authorSlug: string): Promise<unknown[]> {
+  async fetchArticlesByAuthor(authorSlug: string) {
     const allAuthors = await safeFetchAll("author");
     const author = allAuthors.find(
       (a) => (a as Record<string, unknown>).slug === authorSlug,
@@ -367,10 +370,10 @@ const storyblokAdapter: CmsAdapter = {
       "filter_query[author][in]": authorUuid,
       resolve_relations: articleRelations,
     });
-    return items.map(mapStory);
+    return items.map(mapStory) as unknown as Article[];
   },
 
-  async fetchNewsticker(): Promise<unknown[]> {
+  async fetchNewsticker() {
     const items = await safeFetchAll("newsticker", {
       sort_by: "created_at:desc",
       per_page: 20,
@@ -384,10 +387,10 @@ const storyblokAdapter: CmsAdapter = {
         timestamp: String(storyField(story, "created_at") ?? ""),
         url: String(c.url ?? ""),
       };
-    });
+    }) as unknown as NewstickerItem[];
   },
 
-  async fetchVideos(): Promise<unknown[]> {
+  async fetchVideos() {
     const items = await safeFetchAll("video", {
       sort_by: "created_at:desc",
     });
@@ -401,25 +404,25 @@ const storyblokAdapter: CmsAdapter = {
         duration: Number(c.duration ?? 0),
         publishedAt: String(storyField(story, "created_at") ?? ""),
       };
-    });
+    }) as unknown as Video[];
   },
 
-  async fetchNavigation(): Promise<unknown> {
+  async fetchNavigation() {
     const story = await safeFetchFirst("navigation");
-    if (!story) return { items: [] };
+    if (!story) return { items: [] } as unknown as Navigation;
     const c = content(story);
     return {
       items: Array.isArray(c.items) ? c.items : [],
-    };
+    } as unknown as Navigation;
   },
 
-  async fetchSiteConfig(): Promise<unknown> {
+  async fetchSiteConfig() {
     const story = await safeFetchFirst("siteConfig");
-    if (!story) return {};
-    return content(story);
+    if (!story) return {} as unknown as SiteConfig;
+    return content(story) as unknown as SiteConfig;
   },
 
-  async fetchBreakingNews(): Promise<unknown[]> {
+  async fetchBreakingNews() {
     const items = await safeFetchAll("breakingNews", {
       sort_by: "created_at:desc",
       per_page: 5,
@@ -434,10 +437,10 @@ const storyblokAdapter: CmsAdapter = {
         severity: String(c.severity ?? "normal"),
         timestamp: String(storyField(story, "created_at") ?? ""),
       };
-    });
+    }) as unknown as BreakingNews[];
   },
 
-  async fetchQuiz(): Promise<unknown> {
+  async fetchQuiz() {
     const story = await safeFetchFirst("quiz");
     if (!story) return null;
     const c = content(story);
@@ -445,18 +448,18 @@ const storyblokAdapter: CmsAdapter = {
       id: String(storyField(story, "uuid") ?? ""),
       title: String(c.title ?? ""),
       questions: Array.isArray(c.questions) ? c.questions : [],
-    };
+    } as unknown as Quiz;
   },
 
-  async fetchStockData(): Promise<unknown> {
+  async fetchStockData() {
     const story = await safeFetchFirst("stockData");
     if (!story) return null;
     const c = content(story);
     return {
       stocks: Array.isArray(c.stocks) ? c.stocks : [],
       updatedAt: String(storyField(story, "updated_at") ?? ""),
-    };
+    } as unknown as StockData;
   },
 };
 
-export default storyblokAdapter;
+export default storyblokAdapter as unknown as CmsAdapter;

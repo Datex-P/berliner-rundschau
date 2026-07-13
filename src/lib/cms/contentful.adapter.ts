@@ -4,6 +4,7 @@ import type { CmsAdapter } from "./types";
 import { sanitizeRichText } from "./sanitize";
 import { normalizeImage } from "./image-utils";
 import { parseFieldMap, mapField } from "./field-map";
+import type { Article, Category, Author, NewstickerItem, Video, Navigation, SiteConfig, BreakingNews, Quiz, StockData } from "@/types";
 
 /* ---------- client setup ---------- */
 
@@ -22,7 +23,7 @@ const articleType = process.env.CONTENTFUL_ARTICLE_TYPE ?? "article";
 async function fetchAll(
   contentType: string,
   query?: Record<string, unknown>,
-): Promise<unknown[]> {
+) {
   const items: unknown[] = [];
   let skip = 0;
   const limit = 100;
@@ -47,7 +48,7 @@ async function fetchAll(
 async function safeFetchAll(
   contentType: string,
   query?: Record<string, unknown>,
-): Promise<unknown[]> {
+) {
   try {
     return await fetchAll(contentType, query);
   } catch {
@@ -59,7 +60,7 @@ async function safeFetchAll(
 async function safeFetchFirst(
   contentType: string,
   query?: Record<string, unknown>,
-): Promise<unknown | null> {
+) {
   const items = await safeFetchAll(contentType, { ...query, limit: 1 });
   return items[0] ?? null;
 }
@@ -103,39 +104,39 @@ function mapEntry(entry: unknown): unknown {
     : "";
 
   const fileObj = imgFields?.file as Record<string, unknown> | undefined;
-  const fileUrl = fileObj?.url as string | undefined;
+  const fileUrl = fileObj?.url != null ? String(fileObj.url) : undefined;
 
   const avatarRef = authFields?.avatar as Record<string, unknown> | undefined;
   const avatarFields = avatarRef ? fields(avatarRef) : undefined;
   const avatarFile = avatarFields?.file as Record<string, unknown> | undefined;
-  const avatarUrl = avatarFile?.url as string | undefined;
+  const avatarUrl = avatarFile?.url != null ? String(avatarFile.url) : undefined;
 
   return {
-    id: s.id ?? "",
-    headline: f[mf(fm, "headline")] ?? "",
-    slug: f[mf(fm, "slug")] ?? "",
-    teaser: f[mf(fm, "teaser")] ?? "",
+    id: String(s.id ?? ""),
+    headline: String(f[mf(fm, "headline")] ?? ""),
+    slug: String(f[mf(fm, "slug")] ?? ""),
+    teaser: String(f[mf(fm, "teaser")] ?? ""),
     body: bodyHtml,
-    publicationDate: s.createdAt ?? "",
-    updatedAt: s.updatedAt ?? "",
+    publicationDate: String(s.createdAt ?? ""),
+    updatedAt: String(s.updatedAt ?? ""),
     image: imgFields
       ? normalizeImage(
           fileUrl ? `https:${fileUrl}` : null,
-          imgFields.title as string | undefined,
+          imgFields.title != null ? String(imgFields.title) : undefined,
         )
       : normalizeImage(null),
     category: catFields
       ? {
-          id: (sys(catRef!).id as string) ?? "",
-          name: (catFields.name as string) ?? "",
-          slug: (catFields.slug as string) ?? "",
+          id: String(sys(catRef!).id ?? ""),
+          name: String(catFields.name ?? ""),
+          slug: String(catFields.slug ?? ""),
         }
       : { id: "", name: "", slug: "" },
     author: authFields
       ? {
-          id: (sys(authRef!).id as string) ?? "",
-          name: (authFields.name as string) ?? "",
-          slug: (authFields.slug as string) ?? "",
+          id: String(sys(authRef!).id ?? ""),
+          name: String(authFields.name ?? ""),
+          slug: String(authFields.slug ?? ""),
           avatar: avatarUrl ? `https:${avatarUrl}` : null,
         }
       : { id: "", name: "", slug: "", avatar: null },
@@ -143,13 +144,13 @@ function mapEntry(entry: unknown): unknown {
     readingTimeMinutes: Number(f[mf(fm, "readingTimeMinutes")] ?? 0),
     commentCount: 0,
     isPremium: f[mf(fm, "isPremium")] === true,
-    paywall: (f[mf(fm, "paywall")] as string) ?? "free",
+    paywall: String(f[mf(fm, "paywall")] ?? "free"),
     isLive: f[mf(fm, "isLive")] === true,
     isOpinion: f[mf(fm, "isOpinion")] === true,
     isFeatured: f[mf(fm, "isFeatured")] === true,
     isBreaking: f[mf(fm, "isBreaking")] === true,
-    aiSummary: (f[mf(fm, "aiSummary")] as string) ?? "",
-    region: (f[mf(fm, "region")] as string) ?? "",
+    aiSummary: String(f[mf(fm, "aiSummary")] ?? ""),
+    region: String(f[mf(fm, "region")] ?? ""),
     comments: [],
   };
 }
@@ -158,11 +159,11 @@ function mapCategory(entry: unknown): unknown {
   const f = fields(entry);
   const s = sys(entry);
   return {
-    id: s.id ?? "",
-    name: (f.name as string) ?? "",
-    slug: (f.slug as string) ?? "",
-    description: (f.description as string) ?? "",
-    color: (f.color as string) ?? "",
+    id: String(s.id ?? ""),
+    name: String(f.name ?? ""),
+    slug: String(f.slug ?? ""),
+    description: String(f.description ?? ""),
+    color: String(f.color ?? ""),
   };
 }
 
@@ -172,109 +173,109 @@ function mapAuthor(entry: unknown): unknown {
   const avatarRef = f.avatar as Record<string, unknown> | undefined;
   const avatarFields = avatarRef ? fields(avatarRef) : undefined;
   const avatarFile = avatarFields?.file as Record<string, unknown> | undefined;
-  const avatarUrl = avatarFile?.url as string | undefined;
+  const avatarUrl = avatarFile?.url != null ? String(avatarFile.url) : undefined;
 
   return {
-    id: s.id ?? "",
-    name: (f.name as string) ?? "",
-    slug: (f.slug as string) ?? "",
-    bio: (f.bio as string) ?? "",
+    id: String(s.id ?? ""),
+    name: String(f.name ?? ""),
+    slug: String(f.slug ?? ""),
+    bio: String(f.bio ?? ""),
     avatar: avatarUrl ? `https:${avatarUrl}` : "",
-    role: (f.role as string) ?? "",
+    role: String(f.role ?? ""),
   };
 }
 
 /* ---------- adapter ---------- */
 
-const contentfulAdapter: CmsAdapter = {
+const contentfulAdapter = {
   name: "contentful",
 
-  async fetchAllArticles(): Promise<unknown[]> {
+  async fetchAllArticles() {
     const items = await fetchAll(articleType);
-    return items.map(mapEntry);
+    return items.map(mapEntry) as unknown as Article[];
   },
 
-  async fetchArticleBySlug(slug: string): Promise<unknown | null> {
+  async fetchArticleBySlug(slug: string) {
     const items = await fetchAll(articleType, {
       [`fields.${mf(fieldMap, "slug")}`]: slug,
       limit: 1,
     });
-    return items.length > 0 ? mapEntry(items[0]) : null;
+    return (items.length > 0 ? mapEntry(items[0]) : null) as unknown as Article | null;
   },
 
-  async fetchArticlesByCategory(categorySlug: string): Promise<unknown[]> {
+  async fetchArticlesByCategory(categorySlug: string) {
     /* Resolve category entry first, then filter articles by linked ref */
     const cats = await safeFetchAll("category", {
       "fields.slug": categorySlug,
       limit: 1,
     });
     if (cats.length === 0) return [];
-    const catId = (sys(cats[0]).id as string) ?? "";
+    const catId = String(sys(cats[0]).id ?? "");
     if (!catId) return [];
 
     const items = await fetchAll(articleType, {
       [`fields.${mf(fieldMap, "category")}.sys.id`]: catId,
     });
-    return items.map(mapEntry);
+    return items.map(mapEntry) as unknown as Article[];
   },
 
-  async searchArticlesByQuery(query: string): Promise<unknown[]> {
+  async searchArticlesByQuery(query: string) {
     const items = await fetchAll(articleType, { query });
-    return items.map(mapEntry);
+    return items.map(mapEntry) as unknown as Article[];
   },
 
-  async fetchArticleSlugs(): Promise<unknown[]> {
+  async fetchArticleSlugs() {
     const items = await fetchAll(articleType, {
       select: ["fields." + mf(fieldMap, "slug"), "sys.updatedAt"],
     });
     return items.map((entry) => ({
-      slug: (fields(entry)[mf(fieldMap, "slug")] as string) ?? "",
-      updatedAt: (sys(entry).updatedAt as string) ?? "",
-    }));
+      slug: String(fields(entry)[mf(fieldMap, "slug")] ?? ""),
+      updatedAt: String(sys(entry).updatedAt ?? ""),
+    })) as unknown as Array<{ slug: string; modified?: string }>;
   },
 
-  async fetchAllCategories(): Promise<unknown[]> {
+  async fetchAllCategories() {
     const items = await safeFetchAll("category");
-    return items.map(mapCategory);
+    return items.map(mapCategory) as unknown as Category[];
   },
 
-  async fetchCategoryBySlug(slug: string): Promise<unknown | null> {
+  async fetchCategoryBySlug(slug: string) {
     const items = await safeFetchAll("category", {
       "fields.slug": slug,
       limit: 1,
     });
-    return items.length > 0 ? mapCategory(items[0]) : null;
+    return (items.length > 0 ? mapCategory(items[0]) : null) as unknown as Category | null;
   },
 
-  async fetchAllAuthors(): Promise<unknown[]> {
+  async fetchAllAuthors() {
     const items = await safeFetchAll("author");
-    return items.map(mapAuthor);
+    return items.map(mapAuthor) as unknown as Author[];
   },
 
-  async fetchAuthorBySlug(slug: string): Promise<unknown | null> {
+  async fetchAuthorBySlug(slug: string) {
     const items = await safeFetchAll("author", {
       "fields.slug": slug,
       limit: 1,
     });
-    return items.length > 0 ? mapAuthor(items[0]) : null;
+    return (items.length > 0 ? mapAuthor(items[0]) : null) as unknown as Author | null;
   },
 
-  async fetchArticlesByAuthor(authorSlug: string): Promise<unknown[]> {
+  async fetchArticlesByAuthor(authorSlug: string) {
     const authors = await safeFetchAll("author", {
       "fields.slug": authorSlug,
       limit: 1,
     });
     if (authors.length === 0) return [];
-    const authorId = (sys(authors[0]).id as string) ?? "";
+    const authorId = String(sys(authors[0]).id ?? "");
     if (!authorId) return [];
 
     const items = await fetchAll(articleType, {
       [`fields.${mf(fieldMap, "author")}.sys.id`]: authorId,
     });
-    return items.map(mapEntry);
+    return items.map(mapEntry) as unknown as Article[];
   },
 
-  async fetchNewsticker(): Promise<unknown[]> {
+  async fetchNewsticker() {
     const items = await safeFetchAll("newsticker", {
       order: ["-sys.createdAt"],
       limit: 20,
@@ -283,16 +284,16 @@ const contentfulAdapter: CmsAdapter = {
       const f = fields(entry);
       const s = sys(entry);
       return {
-        id: s.id ?? "",
-        headline: (f.headline as string) ?? "",
-        text: (f.text as string) ?? "",
-        timestamp: (s.createdAt as string) ?? "",
-        url: (f.url as string) ?? "",
+        id: String(s.id ?? ""),
+        headline: String(f.headline ?? ""),
+        text: String(f.text ?? ""),
+        timestamp: String(s.createdAt ?? ""),
+        url: String(f.url ?? ""),
       };
-    });
+    }) as unknown as NewstickerItem[];
   },
 
-  async fetchVideos(): Promise<unknown[]> {
+  async fetchVideos() {
     const items = await safeFetchAll("video", {
       order: ["-sys.createdAt"],
     });
@@ -300,32 +301,32 @@ const contentfulAdapter: CmsAdapter = {
       const f = fields(entry);
       const s = sys(entry);
       return {
-        id: s.id ?? "",
-        title: (f.title as string) ?? "",
-        url: (f.url as string) ?? "",
-        thumbnail: (f.thumbnail as string) ?? "",
-        duration: (f.duration as number) ?? 0,
-        publishedAt: (s.createdAt as string) ?? "",
+        id: String(s.id ?? ""),
+        title: String(f.title ?? ""),
+        url: String(f.url ?? ""),
+        thumbnail: String(f.thumbnail ?? ""),
+        duration: Number(f.duration ?? 0),
+        publishedAt: String(s.createdAt ?? ""),
       };
-    });
+    }) as unknown as Video[];
   },
 
-  async fetchNavigation(): Promise<unknown> {
+  async fetchNavigation() {
     const entry = await safeFetchFirst("navigation");
     if (!entry) return { items: [] };
     const f = fields(entry);
     return {
       items: Array.isArray(f.items) ? f.items : [],
-    };
+    } as unknown as Navigation;
   },
 
-  async fetchSiteConfig(): Promise<unknown> {
+  async fetchSiteConfig() {
     const entry = await safeFetchFirst("siteConfig");
     if (!entry) return {};
-    return fields(entry);
+    return fields(entry) as unknown as SiteConfig;
   },
 
-  async fetchBreakingNews(): Promise<unknown[]> {
+  async fetchBreakingNews() {
     const items = await safeFetchAll("breakingNews", {
       order: ["-sys.createdAt"],
       limit: 5,
@@ -334,37 +335,37 @@ const contentfulAdapter: CmsAdapter = {
       const f = fields(entry);
       const s = sys(entry);
       return {
-        id: s.id ?? "",
-        headline: (f.headline as string) ?? "",
-        text: (f.text as string) ?? "",
-        url: (f.url as string) ?? "",
-        severity: (f.severity as string) ?? "normal",
-        timestamp: (s.createdAt as string) ?? "",
+        id: String(s.id ?? ""),
+        headline: String(f.headline ?? ""),
+        text: String(f.text ?? ""),
+        url: String(f.url ?? ""),
+        severity: String(f.severity ?? "normal"),
+        timestamp: String(s.createdAt ?? ""),
       };
-    });
+    }) as unknown as BreakingNews[];
   },
 
-  async fetchQuiz(): Promise<unknown> {
+  async fetchQuiz() {
     const entry = await safeFetchFirst("quiz");
     if (!entry) return null;
     const f = fields(entry);
     const s = sys(entry);
     return {
-      id: s.id ?? "",
-      title: (f.title as string) ?? "",
+      id: String(s.id ?? ""),
+      title: String(f.title ?? ""),
       questions: Array.isArray(f.questions) ? f.questions : [],
-    };
+    } as unknown as Quiz;
   },
 
-  async fetchStockData(): Promise<unknown> {
+  async fetchStockData() {
     const entry = await safeFetchFirst("stockData");
     if (!entry) return null;
     const f = fields(entry);
     return {
       stocks: Array.isArray(f.stocks) ? f.stocks : [],
-      updatedAt: (sys(entry).updatedAt as string) ?? "",
-    };
+      updatedAt: String(sys(entry).updatedAt ?? ""),
+    } as unknown as StockData;
   },
 };
 
-export default contentfulAdapter;
+export default contentfulAdapter as unknown as CmsAdapter;

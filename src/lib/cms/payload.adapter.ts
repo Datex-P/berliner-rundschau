@@ -3,6 +3,7 @@ import { sanitizeRichText } from "./sanitize";
 import { normalizeImage } from "./image-utils";
 import { parseFieldMap, mapField } from "./field-map";
 import { safeFetch, sanitizeError } from "./http";
+import type { Article, Category, Author, NewstickerItem, Video, Navigation, SiteConfig, BreakingNews, Quiz, StockData } from "@/types";
 
 /* ---------- config ---------- */
 
@@ -32,7 +33,7 @@ async function payloadFetch<T>(path: string): Promise<T> {
 }
 
 /** Paginate through all documents of a Payload collection. */
-async function fetchAllDocs(col: string, extraParams = ""): Promise<unknown[]> {
+async function fetchAllDocs(col: string, extraParams = "") {
   const items: unknown[] = [];
   let page = 1;
   let totalPages = 1;
@@ -54,7 +55,7 @@ async function fetchAllDocs(col: string, extraParams = ""): Promise<unknown[]> {
 async function safeFetchAllDocs(
   col: string,
   extraParams = "",
-): Promise<unknown[]> {
+) {
   try {
     return await fetchAllDocs(col, extraParams);
   } catch (err: unknown) {
@@ -69,7 +70,7 @@ async function safeFetchAllDocs(
 async function safeFetchFirstDoc(
   col: string,
   extraParams = "",
-): Promise<unknown | null> {
+) {
   try {
     const sep = extraParams ? `&${extraParams}` : "";
     const res = await payloadFetch<{ docs: unknown[] }>(
@@ -290,41 +291,41 @@ function mapAuthor(doc: Record<string, unknown>): unknown {
 
 /* ---------- adapter ---------- */
 
-const payloadAdapter: CmsAdapter = {
+const payloadAdapter = {
   name: "payload",
 
-  async fetchAllArticles(): Promise<unknown[]> {
+  async fetchAllArticles() {
     const docs = await fetchAllDocs(collection, "sort=-createdAt");
-    return docs.map((d) => mapDoc(d as Record<string, unknown>));
+    return docs.map((d) => mapDoc(d as Record<string, unknown>)) as unknown as Article[];
   },
 
-  async fetchArticleBySlug(slug: string): Promise<unknown | null> {
+  async fetchArticleBySlug(slug: string) {
     const doc = await safeFetchFirstDoc(
       collection,
       `where[${mf("slug")}][equals]=${encodeURIComponent(slug)}`,
     );
     if (!doc) return null;
-    return mapDoc(doc as Record<string, unknown>);
+    return mapDoc(doc as Record<string, unknown>) as unknown as Article;
   },
 
-  async fetchArticlesByCategory(categorySlug: string): Promise<unknown[]> {
+  async fetchArticlesByCategory(categorySlug: string) {
     const docs = await safeFetchAllDocs(
       collection,
       `where[${mf("category")}.slug][equals]=${encodeURIComponent(categorySlug)}&sort=-createdAt`,
     );
-    return docs.map((d) => mapDoc(d as Record<string, unknown>));
+    return docs.map((d) => mapDoc(d as Record<string, unknown>)) as unknown as Article[];
   },
 
-  async searchArticlesByQuery(query: string): Promise<unknown[]> {
+  async searchArticlesByQuery(query: string) {
     const encoded = encodeURIComponent(query);
     const docs = await safeFetchAllDocs(
       collection,
       `where[or][0][${mf("headline")}][like]=${encoded}&where[or][1][${mf("teaser")}][like]=${encoded}&sort=-createdAt`,
     );
-    return docs.map((d) => mapDoc(d as Record<string, unknown>));
+    return docs.map((d) => mapDoc(d as Record<string, unknown>)) as unknown as Article[];
   },
 
-  async fetchArticleSlugs(): Promise<unknown[]> {
+  async fetchArticleSlugs() {
     const docs = await fetchAllDocs(collection, "sort=-createdAt");
     return docs.map((d) => {
       const doc = d as Record<string, unknown>;
@@ -335,43 +336,43 @@ const payloadAdapter: CmsAdapter = {
     });
   },
 
-  async fetchAllCategories(): Promise<unknown[]> {
+  async fetchAllCategories() {
     const docs = await safeFetchAllDocs("categories", "sort=name");
-    return docs.map((d) => mapCategory(d as Record<string, unknown>));
+    return docs.map((d) => mapCategory(d as Record<string, unknown>)) as unknown as Category[];
   },
 
-  async fetchCategoryBySlug(slug: string): Promise<unknown | null> {
+  async fetchCategoryBySlug(slug: string) {
     const doc = await safeFetchFirstDoc(
       "categories",
       `where[slug][equals]=${encodeURIComponent(slug)}`,
     );
     if (!doc) return null;
-    return mapCategory(doc as Record<string, unknown>);
+    return mapCategory(doc as Record<string, unknown>) as unknown as Category;
   },
 
-  async fetchAllAuthors(): Promise<unknown[]> {
+  async fetchAllAuthors() {
     const docs = await safeFetchAllDocs("authors", "sort=name");
-    return docs.map((d) => mapAuthor(d as Record<string, unknown>));
+    return docs.map((d) => mapAuthor(d as Record<string, unknown>)) as unknown as Author[];
   },
 
-  async fetchAuthorBySlug(slug: string): Promise<unknown | null> {
+  async fetchAuthorBySlug(slug: string) {
     const doc = await safeFetchFirstDoc(
       "authors",
       `where[slug][equals]=${encodeURIComponent(slug)}`,
     );
     if (!doc) return null;
-    return mapAuthor(doc as Record<string, unknown>);
+    return mapAuthor(doc as Record<string, unknown>) as unknown as Author;
   },
 
-  async fetchArticlesByAuthor(authorSlug: string): Promise<unknown[]> {
+  async fetchArticlesByAuthor(authorSlug: string) {
     const docs = await safeFetchAllDocs(
       collection,
       `where[${mf("author")}.slug][equals]=${encodeURIComponent(authorSlug)}&sort=-createdAt`,
     );
-    return docs.map((d) => mapDoc(d as Record<string, unknown>));
+    return docs.map((d) => mapDoc(d as Record<string, unknown>)) as unknown as Article[];
   },
 
-  async fetchNewsticker(): Promise<unknown[]> {
+  async fetchNewsticker() {
     const docs = await safeFetchAllDocs(
       "newsticker",
       "sort=-createdAt&limit=20",
@@ -394,10 +395,10 @@ const payloadAdapter: CmsAdapter = {
         publicationDate: String(doc.createdAt ?? ""),
         isPremium: doc.isPremium === true,
       };
-    });
+    }) as unknown as NewstickerItem[];
   },
 
-  async fetchVideos(): Promise<unknown[]> {
+  async fetchVideos() {
     const docs = await safeFetchAllDocs("videos", "sort=-createdAt");
     return docs.map((d) => {
       const doc = d as Record<string, unknown>;
@@ -416,12 +417,12 @@ const payloadAdapter: CmsAdapter = {
         category: String(doc.category ?? ""),
         publishedAt: String(doc.createdAt ?? ""),
       };
-    });
+    }) as unknown as Video[];
   },
 
-  async fetchNavigation(): Promise<unknown> {
+  async fetchNavigation() {
     const doc = await safeFetchFirstDoc("navigation");
-    if (!doc) return { primaryMenu: [], footerMenu: [], socialLinks: [] };
+    if (!doc) return { primaryMenu: [], footerMenu: [], socialLinks: [] } as unknown as Navigation;
     const nav = doc as Record<string, unknown>;
     const items = Array.isArray(nav.items) ? nav.items : [];
     return {
@@ -439,21 +440,21 @@ const payloadAdapter: CmsAdapter = {
       }),
       footerMenu: Array.isArray(nav.footerMenu) ? nav.footerMenu : [],
       socialLinks: Array.isArray(nav.socialLinks) ? nav.socialLinks : [],
-    };
+    } as unknown as Navigation;
   },
 
-  async fetchSiteConfig(): Promise<unknown> {
+  async fetchSiteConfig() {
     const doc = await safeFetchFirstDoc("site-config");
-    if (!doc) return {};
+    if (!doc) return {} as unknown as SiteConfig;
     const cfg = doc as Record<string, unknown>;
     return {
       title: String(cfg.siteName ?? ""),
       description: String(cfg.siteDescription ?? ""),
       socialLinks: Array.isArray(cfg.socialLinks) ? cfg.socialLinks : [],
-    };
+    } as unknown as SiteConfig;
   },
 
-  async fetchBreakingNews(): Promise<unknown[]> {
+  async fetchBreakingNews() {
     const docs = await safeFetchAllDocs(
       "breaking-news",
       "sort=-createdAt&limit=5",
@@ -467,10 +468,10 @@ const payloadAdapter: CmsAdapter = {
         severity: String(doc.severity ?? "normal"),
         publishedAt: String(doc.createdAt ?? ""),
       };
-    });
+    }) as unknown as BreakingNews[];
   },
 
-  async fetchQuiz(): Promise<unknown> {
+  async fetchQuiz() {
     const doc = await safeFetchFirstDoc("quiz", "sort=-createdAt");
     if (!doc) return null;
     const quiz = doc as Record<string, unknown>;
@@ -482,10 +483,10 @@ const payloadAdapter: CmsAdapter = {
       streakRewards: Array.isArray(quiz.streakRewards)
         ? quiz.streakRewards
         : [],
-    };
+    } as unknown as Quiz;
   },
 
-  async fetchStockData(): Promise<unknown> {
+  async fetchStockData() {
     const doc = await safeFetchFirstDoc("stock-data", "sort=-updatedAt");
     if (!doc) return null;
     const stock = doc as Record<string, unknown>;
@@ -494,8 +495,8 @@ const payloadAdapter: CmsAdapter = {
       watchlist: Array.isArray(stock.watchlist) ? stock.watchlist : [],
       chartData: stock.chartData ?? {},
       updatedAt: String(stock.updatedAt ?? ""),
-    };
+    } as unknown as StockData;
   },
 };
 
-export default payloadAdapter;
+export default payloadAdapter as unknown as CmsAdapter;
