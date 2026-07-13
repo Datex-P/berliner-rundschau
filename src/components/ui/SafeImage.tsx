@@ -14,6 +14,8 @@ interface SafeImageProps {
   priority?: boolean;
   /** Explizites loading-Verhalten ("eager" ohne preload-Overhead) */
   loading?: "eager" | "lazy";
+  /** Fetch-Priorität — "high" für LCP-relevante Bilder */
+  fetchPriority?: "high" | "low" | "auto";
   className?: string;
   /** Next.js Image fill-Modus (ignoriert width/height) */
   fill?: boolean;
@@ -31,6 +33,7 @@ export default function SafeImage({
   sizes,
   priority = false,
   loading,
+  fetchPriority: fetchPriorityProp,
   className,
   fill = false,
   quality,
@@ -64,7 +67,7 @@ export default function SafeImage({
       sizes={sizes}
       priority={priority}
       loading={priority ? undefined : loading}
-      fetchPriority={priority ? "high" : undefined}
+      fetchPriority={fetchPriorityProp ?? (priority ? "high" : undefined)}
       fill={fill}
       quality={quality}
       className={className}
