@@ -115,7 +115,7 @@ IMAGES=(
   "seed-hertha-nachwuchs.jpg|https://images.unsplash.com/photo-1749651340944-4ac71fad61f6?auto=format&fit=crop&w=1200&h=675&q=80|Olympiastadion Berlin — Heimat von Hertha BSC"
   "seed-wohnungsmarkt.jpg|https://images.unsplash.com/photo-1755896487242-23cb0847e493?auto=format&fit=crop&w=1200&h=675&q=80|Berliner Wohnhaeuser von oben"
   "seed-digitalisierung.jpg|https://images.unsplash.com/photo-1459767129954-1b1c1f9b9ace?auto=format&fit=crop&w=1200&h=675&q=80|Verwaltungsgebaeude in Berlin"
-  "seed-bvg-ubahn.jpg|https://images.unsplash.com/photo-1752771433743-47a49376fb63?auto=format&fit=crop&w=1200&h=675&q=80|Berliner U-Bahn-Station"
+  "seed-bvg-ubahn.jpg|https://images.unsplash.com/photo-1746912904647-1b925eb88845?auto=format&fit=crop&w=1200&h=675&q=80|Berliner U-Bahn-Station"
   "seed-klimaschutz.jpg|https://images.unsplash.com/photo-1549493131-9157a68aec24?auto=format&fit=crop&w=1200&h=675&q=80|Gruenes Berlin mit Solaranlage"
 )
 

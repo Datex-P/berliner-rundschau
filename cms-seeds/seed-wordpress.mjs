@@ -103,7 +103,7 @@ const IMAGES = [
   { name: "hertha-bsc-nachwuchs-hero", url: "https://images.unsplash.com/photo-1749651340944-4ac71fad61f6?auto=format&fit=crop&w=1200&h=675&q=80", alt: "Olympiastadion Berlin — Heimat von Hertha BSC" },
   { name: "wohnungsmarkt-berlin-hero", url: "https://images.unsplash.com/photo-1755896487242-23cb0847e493?auto=format&fit=crop&w=1200&h=675&q=80", alt: "Berliner Wohnhäuser von oben" },
   { name: "kommentar-digitalisierung-hero", url: "https://images.unsplash.com/photo-1459767129954-1b1c1f9b9ace?auto=format&fit=crop&w=1200&h=675&q=80", alt: "Verwaltungsgebäude in Berlin" },
-  { name: "bvg-ubahn-netz-hero", url: "https://images.unsplash.com/photo-1752771433743-47a49376fb63?auto=format&fit=crop&w=1200&h=675&q=80", alt: "Berliner U-Bahn-Station" },
+  { name: "bvg-ubahn-netz-hero", url: "https://images.unsplash.com/photo-1746912904647-1b925eb88845?auto=format&fit=crop&w=1200&h=675&q=80", alt: "Berliner U-Bahn-Station" },
   { name: "klimaschutz-berlin-hero", url: "https://images.unsplash.com/photo-1549493131-9157a68aec24?auto=format&fit=crop&w=1200&h=675&q=80", alt: "Grünes Berlin — Solaranlage auf Dach" },
 ];
 

@@ -543,7 +543,7 @@ const ARTICLES = [
     title: "BVG modernisiert U-Bahn-Netz: Diese Linien werden ausgebaut",
     teaser: "Die BVG investiert Milliarden in die Modernisierung des U-Bahn-Netzes. Drei Linien stehen im Fokus.",
     body: "<p>Die Berliner Verkehrsbetriebe haben ihren Modernisierungsplan für das U-Bahn-Netz vorgestellt. Insgesamt 4,1 Milliarden Euro sollen in den nächsten zehn Jahren investiert werden.</p><h2>U5-Verlängerung nach Westen</h2><p>Die U5 soll vom Hauptbahnhof über die Turmstraße bis nach Jungfernheide verlängert werden. Die neue Strecke umfasst vier Stationen.</p><h2>U7-Erweiterung zum BER</h2><p>Langfristig soll die U7 bis zum Flughafen BER verlängert werden. Die Machbarkeitsstudie läuft bereits.</p><h2>Modernisierung bestehender Stationen</h2><p>47 bestehende Stationen stehen vor einer umfassenden Sanierung. Barrierefreie Aufzüge, moderne Beleuchtung und digitale Fahrgastinformation.</p>",
-    imageUrl: "https://images.unsplash.com/photo-1752771433743-47a49376fb63?auto=format&fit=crop&w=1200&h=675&q=80",
+    imageUrl: "https://images.unsplash.com/photo-1746912904647-1b925eb88845?auto=format&fit=crop&w=1200&h=675&q=80",
     imageAlt: "U-Bahn-Station in Berlin",
     category: "berlin",
     author: "anna-schmidt",
@@ -565,7 +565,7 @@ const ARTICLES = [
 const NEWSTICKER_ITEMS = [
   { headline: "Bundestag beschließt neues Digitalgesetz", slug: "bundestag-digitalgesetz", topic: "Politik", isPremium: false },
   { headline: "S-Bahn-Störung auf der Ringbahn behoben", slug: "sbahn-ringbahn-stoerung", topic: "Berlin", isPremium: false },
-  { headline: "DAX schließt mit Rekordhoch bei 21.450 Punkten", slug: "dax-rekordhoch", topic: "Wirtschaft", isPremium: true },
+  { headline: "DAX schließt mit Rekordhoch bei 24.987 Punkten", slug: "dax-rekordhoch", topic: "Wirtschaft", isPremium: true },
   { headline: "Union Berlin verpflichtet schwedischen Stürmer", slug: "union-berlin-transfer", topic: "Sport", isPremium: false },
   { headline: "Berlinale kündigt Jury-Präsidentin für 2027 an", slug: "berlinale-jury", topic: "Kultur", isPremium: false },
   { headline: "Neue Fahrradstraße in Friedrichshain eröffnet", slug: "fahrradstrasse-friedrichshain", topic: "Berlin", isPremium: false },
@@ -615,16 +615,16 @@ const QUIZ_REWARDS_JSON = JSON.stringify([
 ]);
 
 const INDICES_JSON = JSON.stringify([
-  { id: "dax", name: "DAX", value: 21450.32, change: 123.45, changePercent: 0.58, currency: "EUR", sparkline: [21200, 21280, 21350, 21400, 21450] },
-  { id: "mdax", name: "MDAX", value: 28932.1, change: -45.2, changePercent: -0.16, currency: "EUR", sparkline: [29000, 28980, 28950, 28940, 28932] },
-  { id: "dow", name: "Dow Jones", value: 42567.89, change: 234.56, changePercent: 0.55, currency: "USD", sparkline: [42300, 42400, 42450, 42500, 42568] },
-  { id: "eurusd", name: "EUR/USD", value: 1.0892, change: 0.0023, changePercent: 0.21, currency: "", sparkline: [1.086, 1.087, 1.088, 1.089, 1.089] },
+  { id: "dax", name: "DAX", value: 24987.45, change: 148.72, changePercent: 0.60, currency: "EUR", sparkline: [21200, 21280, 21350, 21400, 24987] },
+  { id: "mdax", name: "MDAX", value: 30743.1, change: -45.2, changePercent: -0.16, currency: "EUR", sparkline: [29000, 28980, 28950, 28940, 30743] },
+  { id: "dow", name: "Dow Jones", value: 52387.42, change: 234.56, changePercent: 0.55, currency: "USD", sparkline: [42300, 42400, 42450, 42500, 42568] },
+  { id: "eurusd", name: "EUR/USD", value: 1.1392, change: 0.0023, changePercent: 0.21, currency: "", sparkline: [1.086, 1.087, 1.088, 1.089, 1.089] },
 ]);
 
 const WATCHLIST_JSON = JSON.stringify([
-  { id: "sap", symbol: "SAP.DE", name: "SAP SE", price: 192.45, change: 3.2, changePercent: 1.69, marketCap: "237.1B", pe: 38.2, sector: "Technologie" },
-  { id: "sie", symbol: "SIE.DE", name: "Siemens AG", price: 178.9, change: -1.45, changePercent: -0.8, marketCap: "142.8B", pe: 22.1, sector: "Industrie" },
-  { id: "bayn", symbol: "BAYN.DE", name: "Bayer AG", price: 28.34, change: -0.56, changePercent: -1.94, marketCap: "27.8B", pe: null, sector: "Pharma" },
+  { id: "sap", symbol: "SAP.DE", name: "SAP SE", price: 142.85, change: 2.15, changePercent: 1.53, marketCap: "165.8B", pe: 32.4, sector: "Technologie" },
+  { id: "sie", symbol: "SIE.DE", name: "Siemens AG", price: 268.45, change: 3.8, changePercent: 1.44, marketCap: "214.5B", pe: 20.8, sector: "Industrie" },
+  { id: "bayn", symbol: "BAYN.DE", name: "Bayer AG", price: 48.92, change: -0.73, changePercent: -1.47, marketCap: "48.2B", pe: null, sector: "Pharma" },
 ]);
 
 /* ============================================================

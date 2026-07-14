@@ -296,7 +296,7 @@ const ARTICLES = [
     slug: "bvg-ubahn-netz-ausbau",
     teaser: "Die BVG investiert Milliarden in die Modernisierung des U-Bahn-Netzes.",
     body: '<p>Die BVG hat ihren Modernisierungsplan vorgestellt. 4,1 Milliarden Euro in zehn Jahren.</p><h2>U5-Verlängerung nach Westen</h2><p>Die U5 soll vom Hauptbahnhof bis nach Jungfernheide verlängert werden.</p><h2>U7-Erweiterung zum BER</h2><p>Langfristig soll die U7 bis zum Flughafen BER reichen.</p>',
-    imageUrl: "https://images.unsplash.com/photo-1752771433743-47a49376fb63?auto=format&fit=crop&w=1200&h=675&q=80",
+    imageUrl: "https://images.unsplash.com/photo-1746912904647-1b925eb88845?auto=format&fit=crop&w=1200&h=675&q=80",
     categorySlug: "berlin", authorSlug: "anna-schmidt",
     tags: ["BVG", "U-Bahn", "Infrastruktur", "Mobilität"], readingTimeMinutes: 5, region: "Berlin",
   },
@@ -314,7 +314,7 @@ const ARTICLES = [
 const NEWSTICKER = [
   { headline: "Bundestag beschließt neues Digitalgesetz", text: "Der Bundestag hat mit großer Mehrheit das neue Digitalgesetz verabschiedet.", topic: "Politik", isPremium: false },
   { headline: "S-Bahn-Störung auf der Ringbahn behoben", text: "Nach einer zweistündigen Störung fährt die Ringbahn wieder regulär.", topic: "Berlin", isPremium: false },
-  { headline: "DAX schließt mit Rekordhoch bei 21.450 Punkten", text: "Der deutsche Leitindex erreicht ein neues Allzeithoch.", topic: "Wirtschaft", isPremium: true },
+  { headline: "DAX schließt mit Rekordhoch bei 24.987 Punkten", text: "Der deutsche Leitindex erreicht ein neues Allzeithoch.", topic: "Wirtschaft", isPremium: true },
   { headline: "Union Berlin verpflichtet schwedischen Stürmer", text: "Der 1. FC Union Berlin hat den Transfer eines schwedischen Nationalspielers bekanntgegeben.", topic: "Sport", isPremium: false },
   { headline: "Berlinale kündigt Jury-Präsidentin für 2027 an", text: "Die Internationalen Filmfestspiele Berlin haben die Jury-Präsidentin benannt.", topic: "Kultur", isPremium: false },
   { headline: "Neue Fahrradstraße in Friedrichshain eröffnet", text: "Die neue Fahrradstraße verbindet Friedrichshain mit dem Treptower Park.", topic: "Berlin", isPremium: false },
@@ -378,18 +378,18 @@ const QUIZ = {
 const STOCK_DATA = {
   slug: "singleton",
   stocks: [
-    { id: "sap", symbol: "SAP.DE", name: "SAP SE", price: 192.45, change: 3.2, changePercent: 1.69 },
-    { id: "sie", symbol: "SIE.DE", name: "Siemens AG", price: 178.9, change: -1.45, changePercent: -0.8 },
-    { id: "bayn", symbol: "BAYN.DE", name: "Bayer AG", price: 28.34, change: -0.56, changePercent: -1.94 },
+    { id: "sap", symbol: "SAP.DE", name: "SAP SE", price: 142.85, change: 2.15, changePercent: 1.53 },
+    { id: "sie", symbol: "SIE.DE", name: "Siemens AG", price: 268.45, change: 3.8, changePercent: 1.44 },
+    { id: "bayn", symbol: "BAYN.DE", name: "Bayer AG", price: 48.92, change: -0.73, changePercent: -1.47 },
   ],
   indices: [
-    { id: "dax", name: "DAX", value: 21450.32, change: 123.45, changePercent: 0.58 },
-    { id: "mdax", name: "MDAX", value: 28932.1, change: -45.2, changePercent: -0.16 },
-    { id: "dow", name: "Dow Jones", value: 42567.89, change: 234.56, changePercent: 0.55 },
+    { id: "dax", name: "DAX", value: 24987.45, change: 148.72, changePercent: 0.60 },
+    { id: "mdax", name: "MDAX", value: 30743.1, change: -45.2, changePercent: -0.16 },
+    { id: "dow", name: "Dow Jones", value: 52387.42, change: 234.56, changePercent: 0.55 },
   ],
   watchlist: [
-    { id: "sap", symbol: "SAP.DE", name: "SAP SE", price: 192.45, change: 3.2 },
-    { id: "sie", symbol: "SIE.DE", name: "Siemens AG", price: 178.9, change: -1.45 },
+    { id: "sap", symbol: "SAP.DE", name: "SAP SE", price: 142.85, change: 3.2 },
+    { id: "sie", symbol: "SIE.DE", name: "Siemens AG", price: 268.45, change: -1.45 },
   ],
   chartData: {},
 };
