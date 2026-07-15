@@ -1,27 +1,27 @@
 # Berliner Rundschau
 
-Modernes Nachrichtenportal, gebaut mit **Next.js 16**, **React 19** und **Tailwind CSS v4**.
+A modern news portal built with **Next.js 16**, **React 19**, and **Tailwind CSS v4**.
 
-> **Hinweis:** Dies ist ein technisches Demo-Projekt — keine echte Nachrichtenseite. Alle Inhalte und Autoren sind fiktiv.
+> **Note:** This is a technical demo project — not a real news site. All content and authors are fictional.
 
-**[Live Demo](https://berliner-rundschau.vercel.app)** · 61 Testdateien · 500+ Tests · 0 Lint-Errors
+**[Live Demo](https://berliner-rundschau.vercel.app)** · 58 Test Files · 558 Tests · 0 Lint Errors
 
 ---
 
-## Tech-Stack
+## Tech Stack
 
-| Technologie | Version | Einsatz |
+| Technology | Version | Purpose |
 |---|---|---|
 | **Next.js** | 16 (App Router + Turbopack) | Framework, SSR, ISR, API Routes |
-| **React** | 19 (React Compiler) | UI mit automatischer Memoization |
-| **TypeScript** | 5.8 (strict mode) | Typsicherheit, 240+ Zeilen Type System |
-| **Tailwind CSS** | v4 | Styling über 40+ CSS Custom Properties |
-| **Vitest** | 3.1 + Testing Library | 394 Tests, 99% accessible Queries |
+| **React** | 19 (React Compiler) | UI with automatic memoization |
+| **TypeScript** | 5.8 (strict mode) | Type safety, 240+ lines of type definitions |
+| **Tailwind CSS** | v4 | Styling via 40+ CSS Custom Properties |
+| **Vitest** | 3.1 + Testing Library | 558 tests, 99% accessible queries |
 | **GitHub Actions** | CI Pipeline | Lint → TSC → Tests → Build |
 
 ---
 
-## Schnellstart
+## Quick Start
 
 ```bash
 git clone https://github.com/Datex-P/berliner-rundschau.git
@@ -30,86 +30,86 @@ npm install
 npm run dev
 ```
 
-Keine `.env`-Konfiguration nötig — das Projekt verwendet Mock-Daten und läuft sofort.
+No `.env` configuration needed — the project uses mock data and runs out of the box.
 
 ---
 
-## Architektur
+## Architecture
 
-### Server/Client-Split
+### Server/Client Split
 
-19 Server Components (alle Seiten) und 18 gezielte Client Components — nur dort, wo Interaktivität nötig ist:
+19 Server Components (all pages) and 18 targeted Client Components — only where interactivity is required:
 
-| Client Component | Grund |
+| Client Component | Reason |
 |---|---|
-| `SearchClient` | Echtzeit-Suche mit `useDeferredValue` + `useTransition` |
-| `ThemeToggle` | localStorage + Click-Handler für Dark Mode |
-| `Navigation` | Hamburger-Menu mit Focus Trap + Scroll Lock |
-| `ErrorBoundaryContent` | `usePathname()` für kontextuellen Retry |
-| `SafeImage` | `onError`-Fallback bei fehlenden Bildern |
+| `SearchClient` | Real-time search with `useDeferredValue` + `useTransition` |
+| `ThemeToggle` | localStorage + click handler for dark mode |
+| `Navigation` | Hamburger menu with focus trap + scroll lock |
+| `ErrorBoundaryContent` | `usePathname()` for contextual retry |
+| `SafeImage` | `onError` fallback for missing images |
 
-### Data Layer (CMS-austauschbar)
+### Data Layer (CMS-Swappable)
 
 ```
-Seite (Server Component)
+Page (Server Component)
   → data.ts ("use cache" + cacheLife + cacheTag)
-      → cms/  (Adapter-System — CMS wählbar per Env Var)
-          → parseResponse.ts (Runtime-Validierung gegen Schema-Drift)
+      → cms/  (adapter system — CMS selectable via env var)
+          → parseResponse.ts (runtime validation against schema drift)
 ```
 
-`import "server-only"` verhindert versehentlichen Import im Client Bundle.
-17 `"use cache"` Direktiven mit granularem `cacheLife` (Minuten/Stunden/Tage) und `cacheTag` für gezielte Invalidierung via Webhook.
+`import "server-only"` prevents accidental import in the client bundle.
+17 `"use cache"` directives with granular `cacheLife` (minutes/hours/days) and `cacheTag` for selective invalidation via webhook.
 
-### CMS-Adapter
+### CMS Adapters
 
-Das Projekt unterstützt **11 Headless CMS** + einen Mock-Fallback. Alle 11 Adapter sind mit diesem Projekt getestet und lassen sich per Env Var aktivieren. Der Adapter wird per `CMS_ADAPTER` Env Var gewählt — oder automatisch anhand vorhandener CMS-Env-Vars erkannt:
+The project supports **11 headless CMS platforms** + a mock fallback. All 11 adapters are tested with this project and can be activated via env var. The adapter is selected via the `CMS_ADAPTER` env var — or auto-detected based on which CMS env vars are present:
 
-| CMS | Adapter | SDK/Protokoll | Auth | Status |
+| CMS | Adapter | SDK/Protocol | Auth | Status |
 |---|---|---|---|---|
-| Contentful | `contentful` | SDK (`contentful`) | CDA Token | Getestet |
-| Storyblok | `storyblok` | SDK (`storyblok-js-client`) | Access Token | Getestet |
-| WordPress | `wordpress` | REST WP-JSON (`safeFetch`) | App Password (Basic Auth, optional) | Getestet |
-| TYPO3 | `typo3` | REST (EXT:headless) | Bearer Token (optional) | Getestet |
-| DatoCMS | `datocms` | GraphQL via `executeQuery` | API Token | Getestet |
-| Sanity | `sanity` | SDK (`@sanity/client`) + GROQ | Token (optional) | Getestet |
-| Prismic | `prismic` | SDK (`@prismicio/client`) | Access Token (optional) | Getestet |
-| Strapi | `strapi` | REST (`safeFetch`) | API Token (Bearer) | Getestet |
-| Directus | `directus` | REST (`safeFetch`) | Static Token (Bearer) | Getestet |
-| Hygraph | `hygraph` | GraphQL (`safeFetch`) | Access Token (Bearer) | Getestet |
-| Payload | `payload` | REST (`safeFetch`) | API Key | Getestet |
-| Mock | `mock` | In-Memory | — | Getestet |
+| Contentful | `contentful` | SDK (`contentful`) | CDA Token | Tested |
+| Storyblok | `storyblok` | SDK (`storyblok-js-client`) | Access Token | Tested |
+| WordPress | `wordpress` | REST WP-JSON (`safeFetch`) | App Password (Basic Auth, optional) | Tested |
+| TYPO3 | `typo3` | REST (EXT:headless) | Bearer Token (optional) | Tested |
+| DatoCMS | `datocms` | GraphQL via `executeQuery` | API Token | Tested |
+| Sanity | `sanity` | SDK (`@sanity/client`) + GROQ | Token (optional) | Tested |
+| Prismic | `prismic` | SDK (`@prismicio/client`) | Access Token (optional) | Tested |
+| Strapi | `strapi` | REST (`safeFetch`) | API Token (Bearer) | Tested |
+| Directus | `directus` | REST (`safeFetch`) | Static Token (Bearer) | Tested |
+| Hygraph | `hygraph` | GraphQL (`safeFetch`) | Access Token (Bearer) | Tested |
+| Payload | `payload` | REST (`safeFetch`) | API Key | Tested |
+| Mock | `mock` | In-Memory | — | Tested |
 
-**Kein CMS konfiguriert?** → Mock-Daten, Website läuft sofort.
+**No CMS configured?** → Mock data is used, and the site runs immediately.
 
-#### Mit eigenem CMS testen
+#### Testing with Your Own CMS
 
-Jeder der 11 Adapter lässt sich lokal in vier Schritten anbinden — kein Redeploy nötig:
+Each of the 11 adapters can be connected locally in four steps — no redeployment needed:
 
 ```bash
-# 1. Repo klonen und starten (läuft sofort mit Mock-Daten)
+# 1. Clone and start (runs immediately with mock data)
 git clone https://github.com/Datex-P/berliner-rundschau.git
 cd berliner-rundschau
 npm install
-npm run dev          # → http://localhost:3000 (Mock-Daten)
+npm run dev          # → http://localhost:3000 (mock data)
 
-# 2. Seed-Script ausführen (erstellt Demo-Daten im CMS)
-#    → siehe CMS-Guide unten für den exakten Befehl
+# 2. Run seed script (creates demo data in the CMS)
+#    → see CMS guide below for the exact command
 
-# 3. .env.local anlegen — das Seed-Script gibt die Werte am Ende aus
+# 3. Create .env.local — the seed script outputs the values at the end
 cp .env.example .env.local
-#    → Ausgabe vom Seed-Script eintragen
+#    → paste the output from the seed script
 
-# 4. Dev-Server neu starten
+# 4. Restart dev server
 npm run dev
 ```
 
-**Was im Terminal erscheint:** `[cms] Using adapter: <name>`. Im Dev-Modus läuft automatisch ein Health-Check, der warnt wenn Articles, Categories oder Authors leer sind.
+**What appears in the terminal:** `[cms] Using adapter: <name>`. In dev mode, an automatic health check warns if articles, categories, or authors are empty.
 
-##### CMS-spezifische Anleitungen
+##### CMS-Specific Guides
 
-Jedes CMS hat einen eigenen Guide mit Setup, Konfiguration, Seed-Script und Troubleshooting:
+Each CMS has a dedicated guide covering setup, configuration, seed script, and troubleshooting:
 
-| Typ | CMS | Guide |
+| Type | CMS | Guide |
 |---|---|---|
 | **SaaS** | Contentful | [docs/cms/contentful.md](docs/cms/contentful.md) |
 | | Storyblok | [docs/cms/storyblok.md](docs/cms/storyblok.md) |
@@ -120,156 +120,155 @@ Jedes CMS hat einen eigenen Guide mit Setup, Konfiguration, Seed-Script und Trou
 | **Self-Hosted** | Strapi | [docs/cms/strapi.md](docs/cms/strapi.md) |
 | | Directus | [docs/cms/directus.md](docs/cms/directus.md) |
 | | Payload | [docs/cms/payload.md](docs/cms/payload.md) |
-| **Extern** | WordPress | [docs/cms/wordpress.md](docs/cms/wordpress.md) |
+| **External** | WordPress | [docs/cms/wordpress.md](docs/cms/wordpress.md) |
 | | TYPO3 | [docs/cms/typo3.md](docs/cms/typo3.md) |
 
-SaaS-CMS brauchen nur einen API-Token — kein lokaler Server nötig. Self-Hosted CMS (Strapi, Directus, Payload) müssen lokal laufen (Docker oder nativ).
+SaaS CMS platforms only need an API token — no local server required. Self-hosted CMS (Strapi, Directus, Payload) must be running locally (Docker or native).
 
+##### Verification: How to Check It Works
 
-##### Verifizierung: So prüfst du ob es funktioniert
+After `npm run dev`, open the following pages in your browser:
 
-Nach `npm run dev` die folgenden Seiten im Browser öffnen:
-
-| Seite | URL | Was du siehst |
+| Page | URL | What You See |
 |---|---|---|
-| **Startseite** | `http://localhost:3000` | Hero-Artikel + Artikelliste aus deinem CMS |
-| **Artikel-Detail** | `http://localhost:3000/artikel/{slug}` | Einzelner Artikel mit Bild, Body, Author |
-| **Kategorie** | `http://localhost:3000/kategorie/{slug}` | Alle Artikel einer Kategorie |
-| **Suche** | `http://localhost:3000/suche?q=test` | Live-Suchergebnisse |
-| **Health-Check** | Terminal-Output beim Start | `[cms] Using adapter: <name>` + Warnungen bei leeren Daten |
+| **Home** | `http://localhost:3000` | Hero article + article list from your CMS |
+| **Article Detail** | `http://localhost:3000/artikel/{slug}` | Single article with image, body, author |
+| **Category** | `http://localhost:3000/kategorie/{slug}` | All articles in a category |
+| **Search** | `http://localhost:3000/suche?q=test` | Live search results |
+| **Health Check** | Terminal output on start | `[cms] Using adapter: <name>` + warnings for empty data |
 
-**Wenn alles leer ist:** Zurück auf `CMS_ADAPTER=mock` wechseln. Wenn Mock funktioniert, liegt das Problem bei den CMS-Zugangsdaten oder dem Content-Modell.
+**If everything is empty:** Switch back to `CMS_ADAPTER=mock`. If mock works, the issue is with your CMS credentials or content model.
 
-#### Pflicht-Content im CMS
+#### Required CMS Content
 
-**Minimum:** Artikel (mit Headline, Slug, Body) + Kategorien + Autoren müssen im CMS existieren. Alle anderen Content-Typen (Newsticker, Videos, Navigation, Site-Config, Breaking News, Quiz, Stock Data) zeigen Fallback-Daten wenn sie fehlen.
+**Minimum:** Articles (with headline, slug, body) + categories + authors must exist in the CMS. All other content types (newsticker, videos, navigation, site config, breaking news, quiz, stock data) show fallback data when missing.
 
-**Empfehlung zum Testen:** 3–5 Artikel mit je einer Kategorie und einem Autor anlegen. Das reicht für alle Seiten.
+**Recommendation for testing:** Create 3-5 articles with one category and one author each. That covers all pages.
 
-#### Demo-Daten per Seed-Script erstellen
+#### Demo Data via Seed Script
 
-Statt Inhalte manuell anzulegen, können die mitgelieferten Seed-Scripts ein komplettes Demo-Set erstellen: 8 Artikel, 6 Kategorien, 4 Autoren, 6 Newsticker-Einträge, Börsendaten und ein Tagesquiz — alles idempotent (wiederholtes Ausführen ist sicher).
+Instead of creating content manually, the included seed scripts can generate a complete demo set: 8 articles, 6 categories, 4 authors, 6 newsticker entries, stock data, and a daily quiz — all idempotent (safe to run multiple times).
 
-Jeder CMS-Guide unter [docs/cms/](docs/cms/) enthält den exakten Seed-Befehl, den benötigten Token-Typ und CMS-spezifische Hinweise.
+Each CMS guide under [docs/cms/](docs/cms/) contains the exact seed command, required token type, and CMS-specific notes.
 
-##### Nach dem Seed
+##### After Seeding
 
-1. `.env.local` auf das gesedte CMS umstellen (siehe CMS-Guide)
-2. **Prismic:** Im Dashboard alle Dokumente über "Migration release" publizieren (CDN liefert nur Published Content)
-3. `npm run dev` — die Seite sollte alle Demo-Inhalte anzeigen
+1. Update `.env.local` to point to the seeded CMS (see CMS guide)
+2. **Prismic:** Publish all documents via "Migration release" in the dashboard (CDN only serves published content)
+3. `npm run dev` — the site should display all demo content
 
 #### Field Mapping
 
-Wenn CMS-Felder anders heißen als die internen Keys:
+If CMS fields have different names than the internal keys:
 
 ```bash
 CONTENTFUL_FIELD_MAP={"headline":"title","teaser":"description","body":"content"}
 ```
 
-Unterstützte interne Keys: `headline`, `slug`, `teaser`, `body`, `image`, `category`, `author`, `tags`, `readingTimeMinutes`, `isPremium`, `paywall`, `isLive`, `isOpinion`, `isFeatured`, `isBreaking`, `aiSummary`, `region`.
+Supported internal keys: `headline`, `slug`, `teaser`, `body`, `image`, `category`, `author`, `tags`, `readingTimeMinutes`, `isPremium`, `paywall`, `isLive`, `isOpinion`, `isFeatured`, `isBreaking`, `aiSummary`, `region`.
 
-#### Token-Scope pro CMS
+#### Token Scope per CMS
 
-| CMS | Minimaler Token-Typ |
+| CMS | Minimum Token Type |
 |---|---|
-| Contentful | **CDA Token** (Content Delivery API), NICHT CMA/Preview |
+| Contentful | **CDA Token** (Content Delivery API), NOT CMA/Preview |
 | Storyblok | **Public/Private Token** (CDN API) |
 | DatoCMS | **Read-only API Token** |
-| Sanity | Ohne Token = public dataset; mit Token = private/draft |
-| Prismic | **Permanent Access Token** (optional bei public Repos) |
-| Strapi | **API Token** (read-only Scope reicht) |
-| Directus | **Static Token** (read-only Rolle reicht) |
+| Sanity | Without token = public dataset; with token = private/draft |
+| Prismic | **Permanent Access Token** (optional for public repos) |
+| Strapi | **API Token** (read-only scope is sufficient) |
+| Directus | **Static Token** (read-only role is sufficient) |
 | Hygraph | **Permanent Auth Token** (Content API, read-only) |
-| Payload | **API Key** (User mit read-only Rolle) |
-| WordPress | **App Password** (nur wenn Posts nicht public) |
-| TYPO3 | Bearer Token (optional, nur bei geschützten Endpoints). Voraussetzung: EXT:headless + EXT:news |
+| Payload | **API Key** (user with read-only role) |
+| WordPress | **App Password** (only if posts are not public) |
+| TYPO3 | Bearer Token (optional, only for protected endpoints). Requires: EXT:headless + EXT:news |
 
-#### Image-Domains
+#### Image Domains
 
-Für `next/image` Optimierung müssen externe CMS-CDN-Domains freigegeben werden:
+For `next/image` optimization, external CMS CDN domains must be whitelisted:
 
 ```bash
 CMS_IMAGE_DOMAINS=images.ctfassets.net,a.storyblok.com
 ```
 
-**Selbst-gehostete CMS** (Strapi, Directus, Payload, TYPO3): Wenn die CMS-URL nicht `localhost` ist, muss die Domain ebenfalls in `CMS_IMAGE_DOMAINS` stehen. **Änderung erfordert Redeploy.**
+**Self-hosted CMS** (Strapi, Directus, Payload, TYPO3): If the CMS URL is not `localhost`, the domain must also be in `CMS_IMAGE_DOMAINS`. **Requires redeployment after change.**
 
-#### CMS wechseln — Checkliste
+#### Switching CMS — Checklist
 
-1. `CMS_ADAPTER` und zugehörige Env Vars in `.env.local` ändern
-2. `CMS_IMAGE_DOMAINS` auf neue CDN-Domain anpassen
-3. Content-Modell prüfen: Articles, Categories, Authors als Collections/Content-Types anlegen
-4. Pflichtfelder prüfen: `headline`, `slug`, `body` müssen existieren (oder per `FIELD_MAP` gemappt)
-5. `npm run dev` starten — Health-Check im Terminal zeigt fehlende Inhalte
-6. Revalidation-Webhook im CMS auf `/api/revalidate` mit `REVALIDATION_SECRET` einrichten
-7. Redeploy (Vercel/Docker) — Env Vars dort ebenfalls setzen
+1. Update `CMS_ADAPTER` and related env vars in `.env.local`
+2. Update `CMS_IMAGE_DOMAINS` to the new CDN domain
+3. Check content model: articles, categories, authors as collections/content types
+4. Check required fields: `headline`, `slug`, `body` must exist (or be mapped via `FIELD_MAP`)
+5. Run `npm run dev` — health check in terminal shows missing content
+6. Set up revalidation webhook in CMS pointing to `/api/revalidate` with `REVALIDATION_SECRET`
+7. Redeploy (Vercel/Docker) — set env vars there as well
 
 #### Troubleshooting
 
-| Problem | Lösung |
+| Problem | Solution |
 |---|---|
-| Leere Seiten | `CMS_ADAPTER=mock` setzen — wenn Mock funktioniert, liegt es am CMS |
-| "Unknown adapter" Error | Tippfehler in `CMS_ADAPTER`? Gültig: contentful, storyblok, datocms, sanity, prismic, strapi, directus, hygraph, payload, wordpress, typo3, mock |
-| "Multiple CMS env var sets" | Mehrere CMS-Vars gesetzt ohne explizites `CMS_ADAPTER` — einen setzen |
-| Bilder laden nicht | `CMS_IMAGE_DOMAINS` prüfen, Redeploy nötig nach Änderung |
-| Build bricht ab mit "NEXT_PUBLIC_" | Token-Leak-Schutz: CMS-Tokens dürfen NICHT mit `NEXT_PUBLIC_` beginnen |
+| Empty pages | Set `CMS_ADAPTER=mock` — if mock works, the issue is with the CMS |
+| "Unknown adapter" error | Typo in `CMS_ADAPTER`? Valid values: contentful, storyblok, datocms, sanity, prismic, strapi, directus, hygraph, payload, wordpress, typo3, mock |
+| "Multiple CMS env var sets" | Multiple CMS vars set without explicit `CMS_ADAPTER` — set one |
+| Images not loading | Check `CMS_IMAGE_DOMAINS`, redeployment required after changes |
+| Build fails with "NEXT_PUBLIC_" | Token leak protection: CMS tokens must NOT start with `NEXT_PUBLIC_` |
 
-CMS-spezifische Probleme → siehe Troubleshooting-Sektion im jeweiligen [CMS-Guide](docs/cms/).
+CMS-specific issues → see the troubleshooting section in the respective [CMS guide](docs/cms/).
 
-#### Eigenen Adapter schreiben
+#### Writing a Custom Adapter
 
-Falls dein CMS nicht dabei ist: Die Datei `src/lib/cms/mock.adapter.ts` ist die einfachste Vorlage. Ein Adapter implementiert das `CmsAdapter`-Interface (17 Methoden in `types.ts`) und wird als `default export` bereitgestellt. Dann in `detect.ts` und `index.ts` registrieren — fertig.
+If your CMS is not listed: `src/lib/cms/mock.adapter.ts` is the simplest template. An adapter implements the `CmsAdapter` interface (17 methods in `types.ts`) and is provided as a `default export`. Then register it in `detect.ts` and `index.ts` — done.
 
-#### Kommentare
+#### Comments
 
-Kommentare unter Artikeln sind Demo-Daten (aus Mock generiert) und werden nicht aus dem CMS geladen.
+Article comments are demo data (generated from mock) and are not loaded from the CMS.
 
 ### Design Token System
 
-Alle Farben als CSS Custom Properties in `:root` / `.dark` — keine hardcoded Tailwind-Farben:
+All colors as CSS Custom Properties in `:root` / `.dark` — no hardcoded Tailwind colors:
 
 ```css
 :root {
   --color-primary: #15803d;
   --color-primary-hover: color-mix(in srgb, #15803d, black 12%);
-  /* 40+ Variablen für Light + Dark Mode */
+  /* 40+ variables for light + dark mode */
 }
 ```
 
-Bridged zu Tailwind via `@theme inline` — Klassen wie `bg-(--color-primary)` funktionieren überall.
+Bridged to Tailwind via `@theme inline` — classes like `bg-(--color-primary)` work everywhere.
 
 ---
 
 ## Security
 
-| Maßnahme | Detail |
+| Measure | Detail |
 |---|---|
-| **Content Security Policy** | 8 Direktiven inkl. `frame-ancestors 'none'`, `object-src 'none'` |
-| **HSTS** | `max-age=63072000; includeSubDomains; preload` (2 Jahre) |
-| **XSS-Sanitization** | DOMPurify mit restriktiver Tag/Attribut-Allowlist, `ALLOW_DATA_ATTR: false` |
-| **Zod-Validierung** | Alle API-Eingaben (Slugs, Suchbegriffe, Webhooks) schema-validiert |
-| **Timing-Safe Auth** | `crypto.timingSafeEqual()` gegen Timing-Attacks auf Revalidation-Secret |
-| **XML-Injection-Schutz** | RSS-Feed escaped `& < > " '` in CMS-Daten |
-| **External Link Security** | Automatisches `rel="noopener noreferrer"` + Screen-Reader-Hinweis |
-| **Error Message Security** | Keine Stack Traces oder DB-Strings in der UI — nur Digest-Referenzcodes |
-| **Permissions-Policy** | `camera=(), microphone=(), geolocation=()` — Hardware-Zugriff gesperrt |
+| **Content Security Policy** | 8 directives including `frame-ancestors 'none'`, `object-src 'none'` |
+| **HSTS** | `max-age=63072000; includeSubDomains; preload` (2 years) |
+| **XSS Sanitization** | DOMPurify with restrictive tag/attribute allowlist, `ALLOW_DATA_ATTR: false` |
+| **Zod Validation** | All API inputs (slugs, search terms, webhooks) schema-validated |
+| **Timing-Safe Auth** | `crypto.timingSafeEqual()` for revalidation secret comparison |
+| **XML Injection Protection** | RSS feed escapes `& < > " '` in CMS data |
+| **External Link Security** | Automatic `rel="noopener noreferrer"` + screen reader hint |
+| **Error Message Security** | No stack traces or DB strings in the UI — only digest reference codes |
+| **Permissions-Policy** | `camera=(), microphone=(), geolocation=()` — hardware access blocked |
 
 ---
 
 ## Accessibility
 
-| Feature | Implementierung |
+| Feature | Implementation |
 |---|---|
-| **Skip-Link** | Server Component, sichtbar bei Fokus, verlinkt auf `#main-content` |
-| **Focus Trap** | Custom Hook (`useFocusTrap`) für Mobile-Menu — Tab/Shift+Tab gefangen, Escape schließt |
-| **Focus Management** | Reset auf `#main-content` bei jeder Client-Navigation via `FocusManager` |
-| **ARIA durchgehend** | `aria-live="polite"` auf Suchstatus, `role="alert"` auf Errors, `aria-current="page"` auf aktiver Navigation, `aria-expanded` + `aria-controls` auf Mobile-Menu |
-| **Keyboard-Navigation** | Escape schließt Menu, Focus Return zum Trigger, Click-Outside-Handler |
-| **Reduced Motion** | Globale `prefers-reduced-motion` Media Query — alle Animationen deaktiviert |
-| **Focus-Visible Styles** | Einheitlicher `outline: 2px solid` auf allen interaktiven Elementen |
-| **Semantisches HTML** | `<article>`, `<nav>`, `<aside>`, `<time dateTime>`, `<figure>`, konfigurierbares `headingLevel` |
-| **Screen-Reader-Support** | `.sr-only` Texte für Zähler, Labels, externe Links ("öffnet in neuem Tab") |
-| **Scroll Margin** | `scroll-margin-top: 5rem` auf `[id]`-Elementen für Ankerlinks unter dem Header |
+| **Skip Link** | Server Component, visible on focus, links to `#main-content` |
+| **Focus Trap** | Custom hook (`useFocusTrap`) for mobile menu — Tab/Shift+Tab trapped, Escape closes |
+| **Focus Management** | Reset to `#main-content` on every client navigation via `FocusManager` |
+| **ARIA Throughout** | `aria-live="polite"` on search status, `role="alert"` on errors, `aria-current="page"` on active nav, `aria-expanded` + `aria-controls` on mobile menu |
+| **Keyboard Navigation** | Escape closes menu, focus return to trigger, click-outside handler |
+| **Reduced Motion** | Global `prefers-reduced-motion` media query — all animations disabled |
+| **Focus-Visible Styles** | Consistent `outline: 2px solid` on all interactive elements |
+| **Semantic HTML** | `<article>`, `<nav>`, `<aside>`, `<time dateTime>`, `<figure>`, configurable `headingLevel` |
+| **Screen Reader Support** | `.sr-only` texts for counters, labels, external links ("opens in new tab") |
+| **Scroll Margin** | `scroll-margin-top: 5rem` on `[id]` elements for anchor links beneath the header |
 
 ---
 
@@ -277,136 +276,136 @@ Bridged zu Tailwind via `@theme inline` — Klassen wie `bg-(--color-primary)` f
 
 | Feature | Detail |
 |---|---|
-| **JSON-LD** | 3 Schema-Typen: `Article` (Headline, Author, Publisher), `CollectionPage`, `Person` |
-| **OpenGraph** | Pro Seite: Titel, Beschreibung, Bilder mit Dimensionen, `type: "article"` mit `publishedTime` |
-| **Twitter Cards** | `summary_large_image` auf allen Seiten |
-| **Sitemap** | Dynamisch generiert aus CMS-Daten, mit `changeFrequency` und `priority` |
-| **RSS-Feed** | RSS 2.0 mit Dublin Core (`dc:creator`), Atom Self-Link, 1h Cache |
-| **Static Generation** | `generateStaticParams` auf allen dynamischen Routen — Build-Time Pre-Rendering |
-| **Metadata** | `metadataBase` für absolute URLs, `title.template` für konsistente Seitentitel, `lang="de"` |
+| **JSON-LD** | 3 schema types: `Article` (headline, author, publisher), `CollectionPage`, `Person` |
+| **OpenGraph** | Per page: title, description, images with dimensions, `type: "article"` with `publishedTime` |
+| **Twitter Cards** | `summary_large_image` on all pages |
+| **Sitemap** | Dynamically generated from CMS data with `changeFrequency` and `priority` |
+| **RSS Feed** | RSS 2.0 with Dublin Core (`dc:creator`), Atom self-link, 1h cache |
+| **Static Generation** | `generateStaticParams` on all dynamic routes — build-time pre-rendering |
+| **Metadata** | `metadataBase` for absolute URLs, `title.template` for consistent page titles, `lang="de"` |
 
 ---
 
 ## Performance
 
-| Optimierung | Detail |
+| Optimization | Detail |
 |---|---|
-| **React Compiler** | Automatische Memoization — kein manuelles `useMemo`/`useCallback` nötig |
-| **`"use cache"`** | 17 Funktionen im Data Layer mit granularem `cacheLife` + `cacheTag` |
+| **React Compiler** | Automatic memoization — no manual `useMemo`/`useCallback` needed |
+| **`"use cache"`** | 17 functions in the data layer with granular `cacheLife` + `cacheTag` |
 | **Cache Components** | `cacheComponents: true` in `next.config.ts` |
-| **On-Demand Revalidation** | Webhook-Endpoint `/api/revalidate` mit `revalidateTag()` — CMS-Adapter-Tags für selektive Invalidierung |
-| **Paralleles Fetching** | `Promise.all()` auf Homepage (3 Calls), Kategorie, Autor, Sitemap |
-| **Font Optimization** | `next/font/google` mit `display: "swap"` und CSS Variables |
-| **Image Optimization** | `next/image` via `SafeImage` Wrapper mit Error-Fallback, `sizes`, `priority` |
-| **Turbopack** | Dev-Server mit `--turbopack` für schnelle HMR |
-| **CSS color-mix()** | Farbvarianten browser-nativ berechnet — zero runtime cost |
+| **On-Demand Revalidation** | Webhook endpoint `/api/revalidate` with `revalidateTag()` — CMS adapter tags for selective invalidation |
+| **Parallel Fetching** | `Promise.all()` on homepage (3 calls), category, author, sitemap |
+| **Font Optimization** | `next/font/google` with `display: "swap"` and CSS variables |
+| **Image Optimization** | `next/image` via `SafeImage` wrapper with error fallback, `sizes`, `priority` |
+| **Turbopack** | Dev server with `--turbopack` for fast HMR |
+| **CSS color-mix()** | Color variants computed natively in the browser — zero runtime cost |
 
 ---
 
-## Error Handling (5-Schicht-System)
+## Error Handling (5-Layer System)
 
 ```
-1. Global Error Boundary    → Fängt Root-Layout-Fehler, rendert eigenes HTML-Shell
-2. Route Error Boundary     → Retry mit Limit (max 3), Countdown sichtbar
-3. Per-Route Error Pages    → Kontextuelle Meldungen ("Artikel konnte nicht geladen werden")
-4. Component Error States   → Inline-Fehler mit optionalem Retry-Callback
-5. Global Error Reporter    → Fängt unhandled Rejections + window.onerror
+1. Global Error Boundary    → Catches root layout errors, renders its own HTML shell
+2. Route Error Boundary     → Retry with limit (max 3), countdown visible
+3. Per-Route Error Pages    → Contextual messages ("Article could not be loaded")
+4. Component Error States   → Inline errors with optional retry callback
+5. Global Error Reporter    → Catches unhandled rejections + window.onerror
 ```
 
-Alle Error Boundaries nutzen `role="alert"` und zeigen nur Digest-Referenzcodes — keine sensiblen Daten.
-CMS-Ausfälle werden graceful abgefangen (Sitemap/RSS liefern Fallback-Daten statt 500er).
+All error boundaries use `role="alert"` and display only digest reference codes — no sensitive data.
+CMS outages are handled gracefully (sitemap/RSS serve fallback data instead of 500 errors).
 
 ---
 
-## Dark Mode (Flash-frei)
+## Dark Mode (Flash-Free)
 
-Drei-Schicht-System verhindert White Flash beim Laden:
+A three-layer system prevents white flash on load:
 
-1. **Blocking Inline Script** — Liest `localStorage` + `matchMedia` und setzt `.dark` Klasse **vor dem First Paint**
-2. **ThemeProvider (React Context)** — Synchronisiert State, persistiert Auswahl, lauscht auf System-Änderungen live
-3. **40+ CSS Custom Properties** — Vollständiges Dual-Token-System für Light + Dark
+1. **Blocking Inline Script** — Reads `localStorage` + `matchMedia` and sets `.dark` class **before first paint**
+2. **ThemeProvider (React Context)** — Synchronizes state, persists selection, listens for system changes live
+3. **40+ CSS Custom Properties** — Complete dual-token system for light + dark
 
 ---
 
 ## Testing
 
-**61+ Testdateien · 500+ Test Cases · 0 Failures**
+**58 Test Files · 558 Test Cases · 0 Failures**
 
 ```bash
-npm test              # Watch-Mode (Entwicklung)
-npm run test:run      # Single Run (CI)
-npm run lint          # ESLint (0 Errors)
-npx tsc --noEmit      # TypeScript-Check
+npm test              # Watch mode (development)
+npm run test:run      # Single run (CI)
+npm run lint          # ESLint (0 errors)
+npx tsc --noEmit      # TypeScript check
 ```
 
-### Abdeckung
+### Coverage
 
-| Bereich | Dateien | Was getestet wird |
+| Area | Files | What's Tested |
 |---|---|---|
-| Components | 15 | Rendering, Interaktion, Error/Loading States |
-| UI Primitives | 7 | SafeImage, SanitizedHtml, SkipLink, Badges, Tags |
-| Pages | 10 | Homepage, Artikel, Kategorie, Autor, Suche, 404 |
-| API Routes | 2 | Revalidation, Search mit Validierung + Edge Cases |
-| CMS-Adapter | 9 | HTTP, Sanitization, Detection, Field Mapping, Image Utils, Adapter-Tests |
-| Lib/Utils | 11 | Schemas, Formatierung, Security Headers, JSON-LD, Navigation |
-| Hooks | 1 | Focus Trap Verhalten mit Cleanup |
-| Infrastruktur | 2 | Proxy/Middleware, Error Boundaries |
+| Components | 15 | Rendering, interaction, error/loading states |
+| UI Primitives | 7 | SafeImage, SanitizedHtml, SkipLink, badges, tags |
+| Pages | 10 | Homepage, article, category, author, search, 404 |
+| API Routes | 2 | Revalidation, search with validation + edge cases |
+| CMS Adapters | 9 | HTTP, sanitization, detection, field mapping, image utils, adapter tests |
+| Lib/Utils | 11 | Schemas, formatting, security headers, JSON-LD, navigation |
+| Hooks | 1 | Focus trap behavior with cleanup |
+| Infrastructure | 2 | Proxy/middleware, error boundaries |
 
-### Test-Qualität
+### Test Quality
 
-- **222 accessible Queries** (`getByRole`, `getByLabelText`, `getByText`) — nur 1x `getByTestId`
-- **39 `userEvent` Aufrufe** für realistische Benutzerinteraktionen
-- **CI Pipeline** (`ci.yml`): Lint → TypeScript → Vitest → Build bei jedem Push
+- **222 accessible queries** (`getByRole`, `getByLabelText`, `getByText`) — only 1x `getByTestId`
+- **39 `userEvent` calls** for realistic user interactions
+- **CI Pipeline** (`ci.yml`): Lint → TypeScript → Vitest → Build on every push
 
 ---
 
-## Projektstruktur
+## Project Structure
 
 ```
 src/
 ├── app/                          # Next.js App Router
-│   ├── page.tsx                  # Startseite (Hero, Artikelliste, Newsticker)
-│   ├── artikel/[slug]/           # Artikel-Detail mit JSON-LD + OG
-│   ├── kategorie/[slug]/         # Kategorie-Übersicht
-│   ├── autor/[slug]/             # Autoren-Profil + Artikelliste
-│   ├── suche/                    # Volltextsuche mit Debouncing
-│   ├── api/revalidate/           # CMS-Webhook für On-Demand ISR
-│   ├── api/search/               # Such-API mit Zod-Validierung
-│   └── feed.xml/                 # RSS 2.0 Feed
+│   ├── page.tsx                  # Homepage (hero, article list, newsticker)
+│   ├── artikel/[slug]/           # Article detail with JSON-LD + OG
+│   ├── kategorie/[slug]/         # Category overview
+│   ├── autor/[slug]/             # Author profile + article list
+│   ├── suche/                    # Full-text search with debouncing
+│   ├── api/revalidate/           # CMS webhook for on-demand ISR
+│   ├── api/search/               # Search API with Zod validation
+│   └── feed.xml/                 # RSS 2.0 feed
 │
 ├── components/
 │   ├── ui/                       # Primitives (SafeImage, SanitizedHtml, SkipLink, ...)
-│   ├── layout/                   # Navigation mit Focus Trap
-│   ├── AppHeader.tsx             # Header + Suche + Dark Mode Toggle
-│   ├── AppFooter.tsx             # Footer mit Social Links
-│   ├── ArticleCard.tsx           # 3 Varianten (Hero, Default, Compact)
-│   ├── SearchClient.tsx          # Live-Suche mit useTransition
-│   ├── ThemeProvider.tsx         # Dark Mode (System + Manual)
-│   └── ErrorReporter.tsx         # Globaler Error Handler
+│   ├── layout/                   # Navigation with focus trap
+│   ├── AppHeader.tsx             # Header + search + dark mode toggle
+│   ├── AppFooter.tsx             # Footer with social links
+│   ├── ArticleCard.tsx           # 3 variants (hero, default, compact)
+│   ├── SearchClient.tsx          # Live search with useTransition
+│   ├── ThemeProvider.tsx         # Dark mode (system + manual)
+│   └── ErrorReporter.tsx         # Global error handler
 │
 ├── hooks/
-│   └── useFocusTrap.ts           # Tab/Escape/Focus-Return
+│   └── useFocusTrap.ts           # Tab/Escape/focus return
 │
 ├── lib/
-│   ├── data.ts                   # "use cache" Data Layer (17 cached Functions)
-│   ├── mock.ts                   # Mock-Daten für lokale Entwicklung
-│   ├── cms/                      # CMS-Adapter-System
-│   │   ├── index.ts              # Adapter-Loader (switch/case, server-only)
-│   │   ├── detect.ts             # Auto-Detection + Circuit-Breaker + Health-Check
-│   │   ├── types.ts              # CmsAdapter Interface (17 Methoden)
-│   │   ├── http.ts               # safeFetch, SSRF-Schutz, Retry, Error-Sanitization
-│   │   ├── sanitize.ts           # Rich-Text-Sanitization (sanitize-html)
-│   │   ├── defaults.ts           # Fallback-Werte für non-essential Content
-│   │   └── *.adapter.ts          # 11 CMS-Adapter + Mock-Adapter
-│   ├── schemas.ts                # Zod-Schemas für API-Validierung
-│   ├── json-ld.ts                # Strukturierte Daten (3 Schema-Typen)
+│   ├── data.ts                   # "use cache" data layer (17 cached functions)
+│   ├── mock.ts                   # Mock data for local development
+│   ├── cms/                      # CMS adapter system
+│   │   ├── index.ts              # Adapter loader (switch/case, server-only)
+│   │   ├── detect.ts             # Auto-detection + circuit breaker + health check
+│   │   ├── types.ts              # CmsAdapter interface (17 methods)
+│   │   ├── http.ts               # safeFetch, SSRF protection, retry, error sanitization
+│   │   ├── sanitize.ts           # Rich text sanitization (sanitize-html)
+│   │   ├── defaults.ts           # Fallback values for non-essential content
+│   │   └── *.adapter.ts          # 11 CMS adapters + mock adapter
+│   ├── schemas.ts                # Zod schemas for API validation
+│   ├── json-ld.ts                # Structured data (3 schema types)
 │   ├── security-headers.ts       # CSP, HSTS, X-Frame, Permissions-Policy
-│   └── parseResponse.ts          # Runtime-Validierung gegen CMS-Schema-Drift
+│   └── parseResponse.ts          # Runtime validation against CMS schema drift
 │
 ├── types/
-│   └── index.ts                  # 20+ TypeScript Interfaces
+│   └── index.ts                  # 20+ TypeScript interfaces
 │
-└── docs/                         # Handoff-Dokumentation (DE + EN)
+└── docs/                         # Handoff documentation (DE + EN)
     ├── CLIENT_GUIDE_{DE,EN}.md
     ├── DEPLOY_GUIDE_{DE,EN}.md
     ├── DEVELOPER_HANDOFF_{DE,EN}.md
@@ -417,15 +416,15 @@ src/
 
 ## Deployment
 
-Das Projekt ist für Vercel konfiguriert und deployed automatisch bei Push auf `main`:
+The project is configured for Vercel and deploys automatically on push to `main`:
 
 ```bash
-vercel              # Preview-Deployment
-vercel --prod       # Production-Deployment
+vercel              # Preview deployment
+vercel --prod       # Production deployment
 ```
 
 ---
 
-## Lizenz
+## License
 
 MIT
